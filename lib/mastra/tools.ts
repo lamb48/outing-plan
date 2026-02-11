@@ -1,0 +1,142 @@
+import { createTool } from '@mastra/core'
+import { z } from 'zod'
+
+/**
+ * Google Places API Tool
+ * 指定されたエリアとカテゴリで周辺スポットを検索
+ */
+
+interface PlaceResult {
+  placeId: string
+  name: string
+  address: string
+  lat: number
+  lng: number
+  category: string
+  rating?: number
+  priceLevel?: number
+  photoReference?: string
+}
+
+const searchNearbyPlacesSchema = z.object({
+  latitude: z.number().describe('検索エリアの緯度'),
+  longitude: z.number().describe('検索エリアの経度'),
+  category: z.string().describe('スポットのカテゴリ（例: restaurant, cafe, tourist_attraction, museum, park）'),
+  radius: z.number().optional().default(2000).describe('検索半径（メートル、デフォルト2000m）'),
+  maxResults: z.number().optional().default(10).describe('最大取得件数（デフォルト10件）'),
+})
+
+export const searchNearbyPlacesTool = createTool({
+  id: 'search_nearby_places',
+  description: '指定されたエリアとカテゴリで周辺スポットを検索します。レストラン、カフェ、観光地、博物館、公園などを見つけることができます。',
+  inputSchema: searchNearbyPlacesSchema,
+  execute: async ({ context }) => {
+    const { latitude, longitude, category, radius, maxResults } = context
+
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY
+    if (!apiKey) {
+      throw new Error('GOOGLE_PLACES_API_KEY is not set')
+    }
+
+    try {
+      // Google Places API (New) - Text Search
+      const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.photos,places.types',
+        },
+        body: JSON.stringify({
+          textQuery: `${category} near ${latitude},${longitude}`,
+          locationBias: {
+            circle: {
+              center: {
+                latitude,
+                longitude,
+              },
+              radius,
+            },
+          },
+          maxResultCount: maxResults,
+          languageCode: 'ja',
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Google Places API error: ${response.status} ${errorText}`)
+      }
+
+      const data = await response.json()
+      const places = data.places || []
+
+      const results: PlaceResult[] = places.map((place: any) => ({
+        placeId: place.id,
+        name: place.displayName?.text || 'Unknown',
+        address: place.formattedAddress || '',
+        lat: place.location?.latitude || 0,
+        lng: place.location?.longitude || 0,
+        category,
+        rating: place.rating,
+        priceLevel: place.priceLevel,
+        photoReference: place.photos?.[0]?.name,
+      }))
+
+      return {
+        success: true,
+        results,
+        count: results.length,
+      }
+    } catch (error) {
+      console.error('Error searching places:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        results: [],
+        count: 0,
+      }
+    }
+  },
+})
+
+/**
+ * 距離計算ツール（Haversine式）
+ * 2点間の距離を計算
+ */
+const calculateDistanceSchema = z.object({
+  lat1: z.number().describe('地点1の緯度'),
+  lng1: z.number().describe('地点1の経度'),
+  lat2: z.number().describe('地点2の緯度'),
+  lng2: z.number().describe('地点2の経度'),
+})
+
+export const calculateDistanceTool = createTool({
+  id: 'calculate_distance',
+  description: '2つの地点間の直線距離を計算します（メートル単位）',
+  inputSchema: calculateDistanceSchema,
+  execute: async ({ context }) => {
+    const { lat1, lng1, lat2, lng2 } = context
+
+    // Haversine formula
+    const R = 6371e3 // Earth radius in meters
+    const φ1 = (lat1 * Math.PI) / 180
+    const φ2 = (lat2 * Math.PI) / 180
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180
+    const Δλ = ((lng2 - lng1) * Math.PI) / 180
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+    const distance = R * c // Distance in meters
+
+    return {
+      distance: Math.round(distance),
+      distanceKm: (distance / 1000).toFixed(2),
+    }
+  },
+})
+
+export const tools = [searchNearbyPlacesTool, calculateDistanceTool]
