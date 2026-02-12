@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Serena MCP
+.serena/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
