@@ -39,29 +39,17 @@ export const searchNearbyPlacesTool = createTool({
     }
 
     try {
-      // Google Places API (New) - Nearby Search
-      const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.photos,places.types',
-        },
-        body: JSON.stringify({
-          includedTypes: [category],
-          locationRestriction: {
-            circle: {
-              center: {
-                latitude,
-                longitude,
-              },
-              radius,
-            },
-          },
-          maxResultCount: maxResults,
-          languageCode: 'ja',
-        }),
+      const params = new URLSearchParams({
+        location: `${latitude},${longitude}`,
+        radius: radius.toString(),
+        type: category,
+        language: 'ja',
+        key: apiKey,
       })
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params}`
+      )
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -69,18 +57,23 @@ export const searchNearbyPlacesTool = createTool({
       }
 
       const data = await response.json()
-      const places = data.places || []
 
-      const results: PlaceResult[] = places.map((place: any) => ({
-        placeId: place.id,
-        name: place.displayName?.text || 'Unknown',
-        address: place.formattedAddress || '',
-        lat: place.location?.latitude || 0,
-        lng: place.location?.longitude || 0,
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        throw new Error(`Google Places API error: ${data.status} ${data.error_message || ''}`)
+      }
+
+      const places = data.results || []
+
+      const results: PlaceResult[] = places.slice(0, maxResults).map((place: any) => ({
+        placeId: place.place_id,
+        name: place.name || 'Unknown',
+        address: place.vicinity || '',
+        lat: place.geometry?.location?.lat || 0,
+        lng: place.geometry?.location?.lng || 0,
         category,
         rating: place.rating,
-        priceLevel: place.priceLevel,
-        photoReference: place.photos?.[0]?.name,
+        priceLevel: place.price_level,
+        photoReference: place.photos?.[0]?.photo_reference,
       }))
 
       return {
