@@ -29,8 +29,6 @@ export async function loadGoogleMapsApi(): Promise<typeof google.maps> {
       })
 
       await importLibrary('maps')
-      await importLibrary('places')
-      await importLibrary('geometry')
       await importLibrary('marker')
 
       isLoaded = true
