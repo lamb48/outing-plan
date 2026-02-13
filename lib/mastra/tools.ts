@@ -18,6 +18,23 @@ interface PlaceResult {
   photoReference?: string;
 }
 
+interface GooglePlacesApiPlace {
+  place_id: string;
+  name?: string;
+  vicinity?: string;
+  geometry?: {
+    location?: {
+      lat: number;
+      lng: number;
+    };
+  };
+  rating?: number;
+  price_level?: number;
+  photos?: Array<{
+    photo_reference: string;
+  }>;
+}
+
 const searchNearbyPlacesSchema = z.object({
   latitude: z.number().describe("検索エリアの緯度"),
   longitude: z.number().describe("検索エリアの経度"),
@@ -67,17 +84,19 @@ export const searchNearbyPlacesTool = createTool({
 
       const places = data.results || [];
 
-      const results: PlaceResult[] = places.slice(0, maxResults).map((place: any) => ({
-        placeId: place.place_id,
-        name: place.name || "Unknown",
-        address: place.vicinity || "",
-        lat: place.geometry?.location?.lat || 0,
-        lng: place.geometry?.location?.lng || 0,
-        category,
-        rating: place.rating,
-        priceLevel: place.price_level,
-        photoReference: place.photos?.[0]?.photo_reference,
-      }));
+      const results: PlaceResult[] = places
+        .slice(0, maxResults)
+        .map((place: GooglePlacesApiPlace) => ({
+          placeId: place.place_id,
+          name: place.name || "Unknown",
+          address: place.vicinity || "",
+          lat: place.geometry?.location?.lat || 0,
+          lng: place.geometry?.location?.lng || 0,
+          category,
+          rating: place.rating,
+          priceLevel: place.price_level,
+          photoReference: place.photos?.[0]?.photo_reference,
+        }));
 
       return {
         success: true,

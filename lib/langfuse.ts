@@ -34,7 +34,7 @@ export function createTrace(params: {
   userId?: string;
   sessionId?: string;
   input?: unknown;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }) {
   const langfuse = getLangfuseClient();
   if (!langfuse) return null;

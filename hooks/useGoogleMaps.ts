@@ -22,6 +22,7 @@ export function useGoogleMaps(options: UseGoogleMapsOptions): UseGoogleMapsResul
   const { lat, lng } = options.center;
   const zoom = options.zoom ?? 14;
 
+  // 地図の初期化（一度だけ実行）
   useEffect(() => {
     if (!mapRef.current || map) return;
 
@@ -56,7 +57,15 @@ export function useGoogleMaps(options: UseGoogleMapsOptions): UseGoogleMapsResul
     return () => {
       isMounted = false;
     };
-  }, [lat, lng, zoom]);
+  }, [map, lat, lng, zoom]);
+
+  // 地図の中心とズームを更新（lat, lng, zoomが変更された時）
+  useEffect(() => {
+    if (!map) return;
+
+    map.setCenter({ lat, lng });
+    map.setZoom(zoom);
+  }, [map, lat, lng, zoom]);
 
   return { mapRef, map, isLoaded, error };
 }

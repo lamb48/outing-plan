@@ -52,7 +52,11 @@ export function Header({ user }: HeaderProps) {
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-10 w-10 rounded-full"
+                    suppressHydrationWarning
+                  >
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {user.email ? getInitials(user.email) : <User className="h-4 w-4" />}

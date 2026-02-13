@@ -71,9 +71,12 @@ export default async function PlanPage({ params }: PageProps) {
     notFound();
   }
 
-  const totalCost = plan.spots.reduce((sum: number, spot: any) => sum + spot.estimatedCost, 0);
+  const totalCost = plan.spots.reduce(
+    (sum: number, spot: SpotWithRoute) => sum + spot.estimatedCost,
+    0,
+  );
   const totalDuration = plan.spots.reduce(
-    (sum: number, spot: any) => sum + spot.estimatedDuration,
+    (sum: number, spot: SpotWithRoute) => sum + spot.estimatedDuration,
     0,
   );
 
@@ -145,7 +148,7 @@ export default async function PlanPage({ params }: PageProps) {
           {/* スポット一覧 */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">スポット一覧</h3>
-            {plan.spots.map((spot: any) => (
+            {plan.spots.map((spot: SpotWithRoute) => (
               <SpotCard key={spot.placeId} spot={spot} />
             ))}
           </div>

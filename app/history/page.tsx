@@ -22,6 +22,16 @@ interface SpotWithRoute {
   departureTime: string;
 }
 
+interface PlanHistoryItem {
+  id: string;
+  title: string;
+  category: string;
+  budget: number;
+  durationHours: number;
+  spotsCount: number;
+  createdAt: string;
+}
+
 async function getPlanHistory(limit = 20) {
   const supabase = await createClient();
 
@@ -111,7 +121,7 @@ export default async function HistoryPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((plan: any) => (
+            {plans.map((plan: PlanHistoryItem) => (
               <Link key={plan.id} href={`/plan/${plan.id}`}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>

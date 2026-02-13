@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { createNumberedMarker, calculateRoute, createPolyline } from "@/lib/google-maps";
 import { Loader2 } from "lucide-react";
@@ -20,8 +20,8 @@ interface PlanMapProps {
 }
 
 export function PlanMap({ spots, className }: PlanMapProps) {
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [polylines, setPolylines] = useState<google.maps.Polyline[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const polylinesRef = useRef<google.maps.Polyline[]>([]);
 
   const center =
     spots.length > 0 ? { lat: spots[0].lat, lng: spots[0].lng } : { lat: 35.6812, lng: 139.7671 };
@@ -31,13 +31,13 @@ export function PlanMap({ spots, className }: PlanMapProps) {
   useEffect(() => {
     if (!map || !isLoaded || spots.length === 0) return;
 
-    markers.forEach((marker) => marker.setMap(null));
-    polylines.forEach((polyline) => polyline.setMap(null));
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    polylinesRef.current.forEach((polyline) => polyline.setMap(null));
 
     const newMarkers: google.maps.Marker[] = [];
     const bounds = new google.maps.LatLngBounds();
 
-    spots.forEach((spot, index) => {
+    spots.forEach((spot) => {
       const position = { lat: spot.lat, lng: spot.lng };
 
       const marker = createNumberedMarker({
@@ -51,7 +51,7 @@ export function PlanMap({ spots, className }: PlanMapProps) {
       bounds.extend(position);
     });
 
-    setMarkers(newMarkers);
+    markersRef.current = newMarkers;
 
     if (spots.length === 1) {
       map.setCenter(bounds.getCenter());
@@ -73,7 +73,7 @@ export function PlanMap({ spots, className }: PlanMapProps) {
           const route = result.routes[0];
           if (route && route.overview_path) {
             const polyline = createPolyline(route.overview_path, map);
-            setPolylines([polyline]);
+            polylinesRef.current = [polyline];
           }
         })
         .catch((err) => {
@@ -82,8 +82,8 @@ export function PlanMap({ spots, className }: PlanMapProps) {
     }
 
     return () => {
-      markers.forEach((marker) => marker.setMap(null));
-      polylines.forEach((polyline) => polyline.setMap(null));
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      polylinesRef.current.forEach((polyline) => polyline.setMap(null));
     };
   }, [map, isLoaded, spots]);
 
