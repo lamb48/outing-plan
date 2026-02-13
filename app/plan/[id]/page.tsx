@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/Header'
 import { SpotCard } from '@/components/plan/SpotCard'
+import { PlanMapWrapper } from '@/components/plan/PlanMapWrapper'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, MapPin, Clock, DollarSign } from 'lucide-react'
@@ -129,14 +130,9 @@ export default async function PlanPage({ params }: PageProps) {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 地図エリア（Phase 8で実装） */}
+          {/* 地図エリア */}
           <div>
-            <Card className="h-[500px] flex items-center justify-center bg-gray-50">
-              <div className="text-center text-gray-500">
-                <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>地図表示は Phase 8 で実装予定</p>
-              </div>
-            </Card>
+            <PlanMapWrapper spots={plan.spots} className="h-[500px]" />
           </div>
 
           {/* スポット一覧 */}
