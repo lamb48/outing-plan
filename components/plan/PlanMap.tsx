@@ -1,92 +1,91 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useGoogleMaps } from '@/hooks/useGoogleMaps'
-import { createNumberedMarker, calculateRoute, createPolyline } from '@/lib/google-maps'
-import { Loader2 } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { useGoogleMaps } from "@/hooks/useGoogleMaps";
+import { createNumberedMarker, calculateRoute, createPolyline } from "@/lib/google-maps";
+import { Loader2 } from "lucide-react";
 
 interface Spot {
-  placeId: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  order: number
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  order: number;
 }
 
 interface PlanMapProps {
-  spots: Spot[]
-  className?: string
+  spots: Spot[];
+  className?: string;
 }
 
 export function PlanMap({ spots, className }: PlanMapProps) {
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([])
-  const [polylines, setPolylines] = useState<google.maps.Polyline[]>([])
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [polylines, setPolylines] = useState<google.maps.Polyline[]>([]);
 
-  const center = spots.length > 0
-    ? { lat: spots[0].lat, lng: spots[0].lng }
-    : { lat: 35.6812, lng: 139.7671 }
+  const center =
+    spots.length > 0 ? { lat: spots[0].lat, lng: spots[0].lng } : { lat: 35.6812, lng: 139.7671 };
 
-  const { mapRef, map, isLoaded, error } = useGoogleMaps({ center, zoom: 14 })
+  const { mapRef, map, isLoaded, error } = useGoogleMaps({ center, zoom: 14 });
 
   useEffect(() => {
-    if (!map || !isLoaded || spots.length === 0) return
+    if (!map || !isLoaded || spots.length === 0) return;
 
-    markers.forEach(marker => marker.setMap(null))
-    polylines.forEach(polyline => polyline.setMap(null))
+    markers.forEach((marker) => marker.setMap(null));
+    polylines.forEach((polyline) => polyline.setMap(null));
 
-    const newMarkers: google.maps.Marker[] = []
-    const bounds = new google.maps.LatLngBounds()
+    const newMarkers: google.maps.Marker[] = [];
+    const bounds = new google.maps.LatLngBounds();
 
     spots.forEach((spot, index) => {
-      const position = { lat: spot.lat, lng: spot.lng }
+      const position = { lat: spot.lat, lng: spot.lng };
 
       const marker = createNumberedMarker({
         position,
         map,
         label: String(spot.order),
         title: spot.name,
-      })
+      });
 
-      newMarkers.push(marker)
-      bounds.extend(position)
-    })
+      newMarkers.push(marker);
+      bounds.extend(position);
+    });
 
-    setMarkers(newMarkers)
+    setMarkers(newMarkers);
 
     if (spots.length === 1) {
-      map.setCenter(bounds.getCenter())
-      map.setZoom(15)
+      map.setCenter(bounds.getCenter());
+      map.setZoom(15);
     } else {
-      map.fitBounds(bounds)
+      map.fitBounds(bounds);
     }
 
     if (spots.length > 1) {
-      const origin = { lat: spots[0].lat, lng: spots[0].lng }
-      const destination = { lat: spots[spots.length - 1].lat, lng: spots[spots.length - 1].lng }
-      const waypoints = spots.slice(1, -1).map(spot => ({
+      const origin = { lat: spots[0].lat, lng: spots[0].lng };
+      const destination = { lat: spots[spots.length - 1].lat, lng: spots[spots.length - 1].lng };
+      const waypoints = spots.slice(1, -1).map((spot) => ({
         location: { lat: spot.lat, lng: spot.lng },
         stopover: true,
-      }))
+      }));
 
       calculateRoute({ origin, destination, waypoints })
-        .then(result => {
-          const route = result.routes[0]
+        .then((result) => {
+          const route = result.routes[0];
           if (route && route.overview_path) {
-            const polyline = createPolyline(route.overview_path, map)
-            setPolylines([polyline])
+            const polyline = createPolyline(route.overview_path, map);
+            setPolylines([polyline]);
           }
         })
-        .catch(err => {
-          console.error('Failed to calculate route:', err)
-        })
+        .catch((err) => {
+          console.error("Failed to calculate route:", err);
+        });
     }
 
     return () => {
-      markers.forEach(marker => marker.setMap(null))
-      polylines.forEach(polyline => polyline.setMap(null))
-    }
-  }, [map, isLoaded, spots])
+      markers.forEach((marker) => marker.setMap(null));
+      polylines.forEach((polyline) => polyline.setMap(null));
+    };
+  }, [map, isLoaded, spots]);
 
   if (error) {
     return (
@@ -96,7 +95,7 @@ export function PlanMap({ spots, className }: PlanMapProps) {
           <p className="text-sm text-gray-600">{error.message}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -111,5 +110,5 @@ export function PlanMap({ spots, className }: PlanMapProps) {
       )}
       <div ref={mapRef} className="w-full h-full rounded-lg" />
     </div>
-  )
+  );
 }

@@ -1,32 +1,39 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
 
 const loginSchema = z.object({
-  email: z.string().email('有効なメールアドレスを入力してください'),
-  password: z.string().min(1, 'パスワードを入力してください'),
-})
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードを入力してください"),
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const message = searchParams.get('message')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const supabase = createClient()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const message = searchParams.get("message");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const supabase = createClient();
 
   const {
     register,
@@ -34,48 +41,48 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
-    })
+    });
 
-    setIsLoading(false)
+    setIsLoading(false);
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      router.push('/')
-      router.refresh()
+      router.push("/");
+      router.refresh();
     }
-  }
+  };
 
   const handleGoogleLogin = async () => {
     try {
-      setIsGoogleLoading(true)
+      setIsGoogleLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
 
       if (error) {
-        console.error('Error logging in:', error.message)
-        setError('ログインに失敗しました')
+        console.error("Error logging in:", error.message);
+        setError("ログインに失敗しました");
       }
     } catch (error) {
-      console.error('Error:', error)
-      setError('エラーが発生しました')
+      console.error("Error:", error);
+      setError("エラーが発生しました");
     } finally {
-      setIsGoogleLoading(false)
+      setIsGoogleLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -88,17 +95,13 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            {message === 'check_email' && (
+            {message === "check_email" && (
               <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-600">
                 確認メールを送信しました。メールをご確認ください。
               </div>
             )}
 
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+            {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
             <div className="space-y-2">
               <Label htmlFor="email">メールアドレス</Label>
@@ -106,12 +109,10 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="example@example.com"
-                {...register('email')}
+                {...register("email")}
                 disabled={isLoading}
               />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -120,16 +121,14 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="パスワードを入力"
-                {...register('password')}
+                {...register("password")}
                 disabled={isLoading}
               />
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'ログイン中...' : 'ログイン'}
+              {isLoading ? "ログイン中..." : "ログイン"}
             </Button>
 
             <div className="relative">
@@ -148,12 +147,12 @@ export default function LoginPage() {
               disabled={isGoogleLoading}
               className="w-full"
             >
-              {isGoogleLoading ? 'ログイン中...' : 'Googleでログイン'}
+              {isGoogleLoading ? "ログイン中..." : "Googleでログイン"}
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <p className="text-center text-sm text-gray-600">
-              アカウントをお持ちでない方は{' '}
+              アカウントをお持ちでない方は{" "}
               <Link href="/auth/signup" className="text-blue-600 hover:underline">
                 新規登録
               </Link>
@@ -165,5 +164,5 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }

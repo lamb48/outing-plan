@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import { Card } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import dynamic from "next/dynamic";
+import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const PlanMap = dynamic(
-  () => import('@/components/plan/PlanMap').then(mod => ({ default: mod.PlanMap })),
+  () => import("@/components/plan/PlanMap").then((mod) => ({ default: mod.PlanMap })),
   {
     ssr: false,
     loading: () => (
@@ -16,23 +16,23 @@ const PlanMap = dynamic(
         </div>
       </Card>
     ),
-  }
-)
+  },
+);
 
 interface Spot {
-  placeId: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  order: number
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  order: number;
 }
 
 interface PlanMapWrapperProps {
-  spots: Spot[]
-  className?: string
+  spots: Spot[];
+  className?: string;
 }
 
 export function PlanMapWrapper({ spots, className }: PlanMapWrapperProps) {
-  return <PlanMap spots={spots} className={className} />
+  return <PlanMap spots={spots} className={className} />;
 }

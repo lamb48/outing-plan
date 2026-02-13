@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Logs
+*.log
+
+# Database
+prisma/migrations
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode
+.idea
+
+# Generated files
+next-env.d.ts

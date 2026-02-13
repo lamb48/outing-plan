@@ -1,44 +1,44 @@
-import { notFound, redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { Header } from '@/components/layout/Header'
-import { SpotCard } from '@/components/plan/SpotCard'
-import { PlanMapWrapper } from '@/components/plan/PlanMapWrapper'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, MapPin, Clock, DollarSign } from 'lucide-react'
-import Link from 'next/link'
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Header } from "@/components/layout/Header";
+import { SpotCard } from "@/components/plan/SpotCard";
+import { PlanMapWrapper } from "@/components/plan/PlanMapWrapper";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, MapPin, Clock, DollarSign } from "lucide-react";
+import Link from "next/link";
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 interface SpotWithRoute {
-  placeId: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  category: string
-  rating?: number
-  photoReference?: string
-  estimatedDuration: number
-  estimatedCost: number
-  order: number
-  arrivalTime: string
-  departureTime: string
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  category: string;
+  rating?: number;
+  photoReference?: string;
+  estimatedDuration: number;
+  estimatedCost: number;
+  order: number;
+  arrivalTime: string;
+  departureTime: string;
 }
 
 async function getPlan(planId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const { data: plan, error } = await supabase
-    .from('plans')
-    .select('id, title, budget, category, duration_hours, area_lat, area_lng, spots, created_at')
-    .eq('id', planId)
-    .single()
+    .from("plans")
+    .select("id, title, budget, category, duration_hours, area_lat, area_lng, spots, created_at")
+    .eq("id", planId)
+    .single();
 
   if (error || !plan) {
-    return null
+    return null;
   }
 
   return {
@@ -51,26 +51,31 @@ async function getPlan(planId: string) {
     areaLng: plan.area_lng,
     spots: plan.spots as unknown as SpotWithRoute[],
     createdAt: plan.created_at,
-  }
+  };
 }
 
 export default async function PlanPage({ params }: PageProps) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login')
+    redirect("/auth/login");
   }
 
-  const { id } = await params
-  const plan = await getPlan(id)
+  const { id } = await params;
+  const plan = await getPlan(id);
 
   if (!plan) {
-    notFound()
+    notFound();
   }
 
-  const totalCost = plan.spots.reduce((sum: number, spot: any) => sum + spot.estimatedCost, 0)
-  const totalDuration = plan.spots.reduce((sum: number, spot: any) => sum + spot.estimatedDuration, 0)
+  const totalCost = plan.spots.reduce((sum: number, spot: any) => sum + spot.estimatedCost, 0);
+  const totalDuration = plan.spots.reduce(
+    (sum: number, spot: any) => sum + spot.estimatedDuration,
+    0,
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -115,7 +120,9 @@ export default async function PlanPage({ params }: PageProps) {
                 <Clock className="h-5 w-5 text-gray-500" />
                 <div>
                   <div className="text-xs text-gray-500">総所要時間</div>
-                  <div className="text-lg font-semibold">{Math.round(totalDuration / 60 * 10) / 10}時間</div>
+                  <div className="text-lg font-semibold">
+                    {Math.round((totalDuration / 60) * 10) / 10}時間
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -145,5 +152,5 @@ export default async function PlanPage({ params }: PageProps) {
         </div>
       </main>
     </div>
-  )
+  );
 }

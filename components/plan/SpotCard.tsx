@@ -1,36 +1,36 @@
-import { MapPin, Clock, DollarSign, Star } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { MapPin, Clock, DollarSign, Star } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Spot {
-  placeId: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  category: string
-  rating?: number
-  photoReference?: string
-  estimatedDuration: number
-  estimatedCost: number
-  order: number
-  arrivalTime: string
-  departureTime: string
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  category: string;
+  rating?: number;
+  photoReference?: string;
+  estimatedDuration: number;
+  estimatedCost: number;
+  order: number;
+  arrivalTime: string;
+  departureTime: string;
 }
 
 interface SpotCardProps {
-  spot: Spot
+  spot: Spot;
 }
 
 export function SpotCard({ spot }: SpotCardProps) {
-  const arrivalTime = new Date(spot.arrivalTime).toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  const departureTime = new Date(spot.departureTime).toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const arrivalTime = new Date(spot.arrivalTime).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const departureTime = new Date(spot.departureTime).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -73,10 +73,12 @@ export function SpotCard({ spot }: SpotCardProps) {
           </div>
           <div>
             <div className="text-xs text-gray-500">訪問時間</div>
-            <div className="font-medium">{arrivalTime} - {departureTime}</div>
+            <div className="font-medium">
+              {arrivalTime} - {departureTime}
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

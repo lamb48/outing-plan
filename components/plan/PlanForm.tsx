@@ -1,17 +1,23 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
-import { MapPin, Loader2 } from 'lucide-react'
-import { CATEGORIES } from '@/lib/categories'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { MapPin, Loader2 } from "lucide-react";
+import { CATEGORIES } from "@/lib/categories";
 
 const planFormSchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -20,15 +26,15 @@ const planFormSchema = z.object({
   budget: z.number().min(1000).max(100000),
   category: z.string().min(1),
   durationHours: z.number().min(0.5).max(12),
-})
+});
 
-type PlanFormData = z.infer<typeof planFormSchema>
+type PlanFormData = z.infer<typeof planFormSchema>;
 
 export function PlanForm() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isGettingLocation, setIsGettingLocation] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const {
     register,
@@ -41,78 +47,73 @@ export function PlanForm() {
     defaultValues: {
       latitude: 35.6812,
       longitude: 139.7671,
-      locationName: '東京駅',
+      locationName: "東京駅",
       budget: 5000,
-      category: 'グルメ',
+      category: "グルメ",
       durationHours: 4,
     },
-  })
+  });
 
-  const budget = watch('budget')
-  const durationHours = watch('durationHours')
+  const budget = watch("budget");
+  const durationHours = watch("durationHours");
 
   // 現在地取得
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setError('お使いのブラウザは位置情報に対応していません')
-      return
+      setError("お使いのブラウザは位置情報に対応していません");
+      return;
     }
 
-    setIsGettingLocation(true)
-    setError(null)
+    setIsGettingLocation(true);
+    setError(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setValue('latitude', position.coords.latitude)
-        setValue('longitude', position.coords.longitude)
-        setValue('locationName', '現在地')
-        setIsGettingLocation(false)
+        setValue("latitude", position.coords.latitude);
+        setValue("longitude", position.coords.longitude);
+        setValue("locationName", "現在地");
+        setIsGettingLocation(false);
       },
       (error) => {
-        console.error('Error getting location:', error)
-        setError('位置情報の取得に失敗しました')
-        setIsGettingLocation(false)
-      }
-    )
-  }
+        console.error("Error getting location:", error);
+        setError("位置情報の取得に失敗しました");
+        setIsGettingLocation(false);
+      },
+    );
+  };
 
   const onSubmit = async (data: PlanFormData) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch('/api/plan/generate', {
-        method: 'POST',
+      const response = await fetch("/api/plan/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || 'プラン生成に失敗しました')
+        throw new Error(result.message || "プラン生成に失敗しました");
       }
 
       // プラン結果画面に遷移
-      router.push(`/plan/${result.plan.id}`)
-
+      router.push(`/plan/${result.plan.id}`);
     } catch (error) {
-      console.error('Error generating plan:', error)
-      setError(error instanceof Error ? error.message : 'エラーが発生しました')
+      console.error("Error generating plan:", error);
+      setError(error instanceof Error ? error.message : "エラーが発生しました");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       {/* 位置情報 */}
       <div className="space-y-2">
@@ -120,7 +121,7 @@ export function PlanForm() {
         <div className="flex gap-2">
           <Input
             placeholder="東京駅"
-            {...register('locationName')}
+            {...register("locationName")}
             disabled={isLoading}
             className="flex-1"
           />
@@ -142,14 +143,14 @@ export function PlanForm() {
             type="number"
             step="0.000001"
             placeholder="緯度"
-            {...register('latitude', { valueAsNumber: true })}
+            {...register("latitude", { valueAsNumber: true })}
             disabled={isLoading}
           />
           <Input
             type="number"
             step="0.000001"
             placeholder="経度"
-            {...register('longitude', { valueAsNumber: true })}
+            {...register("longitude", { valueAsNumber: true })}
             disabled={isLoading}
           />
         </div>
@@ -162,7 +163,7 @@ export function PlanForm() {
       <div className="space-y-2">
         <Label>カテゴリ</Label>
         <Select
-          onValueChange={(value) => setValue('category', value)}
+          onValueChange={(value) => setValue("category", value)}
           defaultValue="グルメ"
           disabled={isLoading}
         >
@@ -177,9 +178,7 @@ export function PlanForm() {
             ))}
           </SelectContent>
         </Select>
-        {errors.category && (
-          <p className="text-sm text-red-600">{errors.category.message}</p>
-        )}
+        {errors.category && <p className="text-sm text-red-600">{errors.category.message}</p>}
       </div>
 
       {/* 予算 */}
@@ -190,12 +189,10 @@ export function PlanForm() {
           max={50000}
           step={1000}
           value={[budget || 5000]}
-          onValueChange={(value) => setValue('budget', value[0])}
+          onValueChange={(value) => setValue("budget", value[0])}
           disabled={isLoading}
         />
-        {errors.budget && (
-          <p className="text-sm text-red-600">{errors.budget.message}</p>
-        )}
+        {errors.budget && <p className="text-sm text-red-600">{errors.budget.message}</p>}
       </div>
 
       {/* 時間 */}
@@ -206,7 +203,7 @@ export function PlanForm() {
           max={12}
           step={0.5}
           value={[durationHours || 4]}
-          onValueChange={(value) => setValue('durationHours', value[0])}
+          onValueChange={(value) => setValue("durationHours", value[0])}
           disabled={isLoading}
         />
         {errors.durationHours && (
@@ -221,9 +218,9 @@ export function PlanForm() {
             AIがプランを作成中...
           </>
         ) : (
-          'AIプラン生成'
+          "AIプラン生成"
         )}
       </Button>
     </form>
-  )
+  );
 }

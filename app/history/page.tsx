@@ -1,43 +1,47 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { Header } from '@/components/layout/Header'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, DollarSign, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Header } from "@/components/layout/Header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Clock, DollarSign, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface SpotWithRoute {
-  placeId: string
-  name: string
-  address: string
-  lat: number
-  lng: number
-  category: string
-  rating?: number
-  photoReference?: string
-  estimatedDuration: number
-  estimatedCost: number
-  order: number
-  arrivalTime: string
-  departureTime: string
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  category: string;
+  rating?: number;
+  photoReference?: string;
+  estimatedDuration: number;
+  estimatedCost: number;
+  order: number;
+  arrivalTime: string;
+  departureTime: string;
 }
 
 async function getPlanHistory(limit = 20) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const { data: plans, error, count } = await supabase
-    .from('plans')
-    .select('id, title, category, budget, duration_hours, spots, created_at', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .limit(limit)
+  const {
+    data: plans,
+    error,
+    count,
+  } = await supabase
+    .from("plans")
+    .select("id, title, category, budget, duration_hours, spots, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) {
-    console.error('Error fetching plans:', error)
-    throw new Error('プラン履歴の取得に失敗しました')
+    console.error("Error fetching plans:", error);
+    throw new Error("プラン履歴の取得に失敗しました");
   }
 
   const formattedPlans = (plans || []).map((plan) => {
-    const spots = plan.spots as unknown as SpotWithRoute[]
+    const spots = plan.spots as unknown as SpotWithRoute[];
     return {
       id: plan.id,
       title: plan.title,
@@ -46,8 +50,8 @@ async function getPlanHistory(limit = 20) {
       durationHours: plan.duration_hours,
       spotsCount: spots.length,
       createdAt: plan.created_at,
-    }
-  })
+    };
+  });
 
   return {
     plans: formattedPlans,
@@ -57,18 +61,20 @@ async function getPlanHistory(limit = 20) {
       limit,
       hasMore: (count || 0) > limit,
     },
-  }
+  };
 }
 
 export default async function HistoryPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login')
+    redirect("/auth/login");
   }
 
-  const { plans, pagination } = await getPlanHistory()
+  const { plans, pagination } = await getPlanHistory();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -115,10 +121,10 @@ export default async function HistoryPage() {
                     </div>
                     <CardTitle className="text-xl line-clamp-2">{plan.title}</CardTitle>
                     <CardDescription>
-                      {new Date(plan.createdAt).toLocaleDateString('ja-JP', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
+                      {new Date(plan.createdAt).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       })}
                     </CardDescription>
                   </CardHeader>
@@ -153,5 +159,5 @@ export default async function HistoryPage() {
         )}
       </main>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,31 +11,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { LogOut, User } from 'lucide-react'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+} from "@/components/ui/dropdown-menu";
+import { LogOut, User } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface HeaderProps {
-  user: SupabaseUser | null
+  user: SupabaseUser | null;
 }
 
 export function Header({ user }: HeaderProps) {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
-    router.refresh()
-  }
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+    router.refresh();
+  };
 
   const getInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase()
-  }
+    return email.substring(0, 2).toUpperCase();
+  };
 
   const getDisplayName = (user: SupabaseUser) => {
-    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー'
-  }
+    return user.user_metadata?.full_name || user.email?.split("@")[0] || "ユーザー";
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -63,9 +63,7 @@ export function Header({ user }: HeaderProps) {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel>マイアカウント</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5 text-sm text-gray-600">
-                    {user.email}
-                  </div>
+                  <div className="px-2 py-1.5 text-sm text-gray-600">{user.email}</div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -75,12 +73,10 @@ export function Header({ user }: HeaderProps) {
               </DropdownMenu>
             </>
           ) : (
-            <Button onClick={() => router.push('/auth/login')}>
-              ログイン
-            </Button>
+            <Button onClick={() => router.push("/auth/login")}>ログイン</Button>
           )}
         </div>
       </div>
     </header>
-  )
+  );
 }

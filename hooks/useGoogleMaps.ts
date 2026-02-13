@@ -13,9 +13,7 @@ interface UseGoogleMapsResult {
   error: Error | null;
 }
 
-export function useGoogleMaps(
-  options: UseGoogleMapsOptions,
-): UseGoogleMapsResult {
+export function useGoogleMaps(options: UseGoogleMapsOptions): UseGoogleMapsResult {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -49,9 +47,7 @@ export function useGoogleMaps(
         setIsLoaded(true);
       } catch (err) {
         console.error("Failed to load Google Maps:", err);
-        setError(
-          err instanceof Error ? err : new Error("Failed to load Google Maps"),
-        );
+        setError(err instanceof Error ? err : new Error("Failed to load Google Maps"));
       }
     };
 

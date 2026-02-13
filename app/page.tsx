@@ -1,12 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { Header } from '@/components/layout/Header'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { PlanForm } from '@/components/plan/PlanForm'
-import Link from 'next/link'
+import { createClient } from "@/lib/supabase/server";
+import { Header } from "@/components/layout/Header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlanForm } from "@/components/plan/PlanForm";
+import Link from "next/link";
 
 export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -27,9 +29,7 @@ export default async function Home() {
             <Card className="max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle>プラン作成</CardTitle>
-                <CardDescription>
-                  位置情報、予算、カテゴリ、時間を入力してください
-                </CardDescription>
+                <CardDescription>位置情報、予算、カテゴリ、時間を入力してください</CardDescription>
               </CardHeader>
               <CardContent>
                 <PlanForm />
@@ -37,10 +37,7 @@ export default async function Home() {
             </Card>
 
             <div className="mt-6 text-center">
-              <Link
-                href="/history"
-                className="text-blue-600 hover:underline"
-              >
+              <Link href="/history" className="text-blue-600 hover:underline">
                 過去のプランを見る →
               </Link>
             </div>
@@ -49,9 +46,7 @@ export default async function Home() {
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6">
               <div className="text-center py-8">
-                <p className="text-lg text-gray-600 mb-4">
-                  プランを作成するにはログインが必要です
-                </p>
+                <p className="text-lg text-gray-600 mb-4">プランを作成するにはログインが必要です</p>
                 <a
                   href="/auth/login"
                   className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 transition-colors"
@@ -65,12 +60,10 @@ export default async function Home() {
 
         {user && (
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              ログイン中: {user.email}
-            </p>
+            <p className="text-sm text-gray-500">ログイン中: {user.email}</p>
           </div>
         )}
       </main>
     </div>
-  )
+  );
 }

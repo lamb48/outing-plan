@@ -1,32 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/plan/[id]
  * プラン詳細取得API
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id } = await params;
 
     // 認証チェック
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // プラン取得（RLSにより自動的に所有権チェック）
     const { data: plan, error } = await supabase
-      .from('plans')
-      .select(`
+      .from("plans")
+      .select(
+        `
         id,
         title,
         budget,
@@ -43,15 +41,13 @@ export async function GET(
           display_name,
           avatar_url
         )
-      `)
-      .eq('id', id)
-      .single()
+      `,
+      )
+      .eq("id", id)
+      .single();
 
     if (error || !plan) {
-      return NextResponse.json(
-        { error: 'Plan not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -68,16 +64,15 @@ export async function GET(
         createdAt: plan.created_at,
         user: Array.isArray(plan.users) ? plan.users[0] : plan.users,
       },
-    })
-
+    });
   } catch (error) {
-    console.error('Error fetching plan:', error)
+    console.error("Error fetching plan:", error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch plan',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to fetch plan",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }

@@ -1,17 +1,17 @@
-import { Langfuse } from 'langfuse'
+import { Langfuse } from "langfuse";
 
 /**
  * Langfuseクライアントのシングルトン
  * LLMのトレーシング、プロンプト管理、コスト分析に使用
  */
 
-let langfuseInstance: Langfuse | null = null
+let langfuseInstance: Langfuse | null = null;
 
 export function getLangfuseClient(): Langfuse | null {
   // 環境変数が設定されていない場合はnullを返す（Langfuseはオプショナル）
   if (!process.env.LANGFUSE_PUBLIC_KEY || !process.env.LANGFUSE_SECRET_KEY) {
-    console.warn('Langfuse keys not configured. Tracing disabled.')
-    return null
+    console.warn("Langfuse keys not configured. Tracing disabled.");
+    return null;
   }
 
   // シングルトンパターン
@@ -19,25 +19,25 @@ export function getLangfuseClient(): Langfuse | null {
     langfuseInstance = new Langfuse({
       publicKey: process.env.LANGFUSE_PUBLIC_KEY,
       secretKey: process.env.LANGFUSE_SECRET_KEY,
-      baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com',
-    })
+      baseUrl: process.env.LANGFUSE_HOST || "https://cloud.langfuse.com",
+    });
   }
 
-  return langfuseInstance
+  return langfuseInstance;
 }
 
 /**
  * トレースを開始
  */
 export function createTrace(params: {
-  name: string
-  userId?: string
-  sessionId?: string
-  input?: unknown
-  metadata?: Record<string, any>
+  name: string;
+  userId?: string;
+  sessionId?: string;
+  input?: unknown;
+  metadata?: Record<string, any>;
 }) {
-  const langfuse = getLangfuseClient()
-  if (!langfuse) return null
+  const langfuse = getLangfuseClient();
+  if (!langfuse) return null;
 
   return langfuse.trace({
     name: params.name,
@@ -45,7 +45,7 @@ export function createTrace(params: {
     sessionId: params.sessionId,
     input: params.input,
     metadata: params.metadata,
-  })
+  });
 }
 
 /**
@@ -53,10 +53,10 @@ export function createTrace(params: {
  * API Routeの終了時に呼び出す
  */
 export async function flushLangfuse() {
-  const langfuse = getLangfuseClient()
-  if (!langfuse) return
+  const langfuse = getLangfuseClient();
+  if (!langfuse) return;
 
-  await langfuse.flushAsync()
+  await langfuse.flushAsync();
 }
 
 /**
@@ -64,8 +64,8 @@ export async function flushLangfuse() {
  * アプリケーション終了時に呼び出す
  */
 export async function shutdownLangfuse() {
-  const langfuse = getLangfuseClient()
-  if (!langfuse) return
+  const langfuse = getLangfuseClient();
+  if (!langfuse) return;
 
-  await langfuse.shutdownAsync()
+  await langfuse.shutdownAsync();
 }

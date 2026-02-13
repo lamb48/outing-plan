@@ -74,8 +74,7 @@ export async function POST(request: NextRequest) {
       const { error: insertError } = await supabase.from("users").insert({
         id: user.id,
         email: user.email!,
-        display_name:
-          user.user_metadata?.full_name || user.email?.split("@")[0],
+        display_name: user.user_metadata?.full_name || user.email?.split("@")[0],
         avatar_url: user.user_metadata?.avatar_url,
       });
 
@@ -109,9 +108,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertPlanError || !savedPlan) {
-      throw new Error(
-        `プランの保存に失敗しました: ${insertPlanError?.message}`,
-      );
+      throw new Error(`プランの保存に失敗しました: ${insertPlanError?.message}`);
     }
 
     // Langfuseバッファをフラッシュ
@@ -138,24 +135,20 @@ export async function POST(request: NextRequest) {
     await flushLangfuse();
 
     const message = error instanceof Error ? error.message : "Unknown error";
-    const isQuotaExceeded =
-      /quota exceeded|rate limit|free_tier_requests/i.test(message);
+    const isQuotaExceeded = /quota exceeded|rate limit|free_tier_requests/i.test(message);
     const retryAfterSeconds = parseRetryAfterSeconds(message);
 
     if (isQuotaExceeded) {
       return NextResponse.json(
         {
           error: "Rate limit exceeded",
-          message:
-            "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
+          message: "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
           details: message,
           retryAfterSeconds,
         },
         {
           status: 429,
-          headers: retryAfterSeconds
-            ? { "Retry-After": String(retryAfterSeconds) }
-            : undefined,
+          headers: retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
         },
       );
     }
