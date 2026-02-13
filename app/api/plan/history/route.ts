@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import prisma from '@/lib/prisma'
 
 /**
  * GET /api/plan/history
@@ -24,54 +23,35 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // プラン一覧取得（自分のプランのみ）
-    const plans = await prisma.plan.findMany({
-      where: {
-        userId: user.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
-      select: {
-        id: true,
-        title: true,
-        budget: true,
-        category: true,
-        durationHours: true,
-        areaLat: true,
-        areaLng: true,
-        spots: true,
-        createdAt: true,
-      },
-    })
+    // プラン一覧取得（RLSにより自動的に自分のプランのみ）
+    const { data: plans, error, count } = await supabase
+      .from('plans')
+      .select('id, title, budget, category, duration_hours, area_lat, area_lng, spots, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
-    // 総件数取得
-    const total = await prisma.plan.count({
-      where: {
-        userId: user.id,
-      },
-    })
+    if (error) {
+      throw new Error(error.message)
+    }
 
     return NextResponse.json({
       success: true,
-      plans: plans.map((plan) => ({
+      plans: (plans || []).map((plan) => ({
         id: plan.id,
         title: plan.title,
         budget: plan.budget,
         category: plan.category,
-        durationHours: plan.durationHours,
-        areaLat: plan.areaLat,
-        areaLng: plan.areaLng,
+        durationHours: plan.duration_hours,
+        areaLat: plan.area_lat,
+        areaLng: plan.area_lng,
         spotsCount: Array.isArray(plan.spots) ? plan.spots.length : 0,
-        createdAt: plan.createdAt.toISOString(),
+        createdAt: plan.created_at,
       })),
       pagination: {
-        total,
+        total: count || 0,
         limit,
         offset,
-        hasMore: offset + limit < total,
+        hasMore: offset + limit < (count || 0),
       },
     })
 

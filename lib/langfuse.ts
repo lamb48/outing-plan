@@ -33,6 +33,7 @@ export function createTrace(params: {
   name: string
   userId?: string
   sessionId?: string
+  input?: unknown
   metadata?: Record<string, any>
 }) {
   const langfuse = getLangfuseClient()
@@ -42,6 +43,7 @@ export function createTrace(params: {
     name: params.name,
     userId: params.userId,
     sessionId: params.sessionId,
+    input: params.input,
     metadata: params.metadata,
   })
 }

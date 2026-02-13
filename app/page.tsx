@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { PlanForm } from '@/components/plan/PlanForm'
+import Link from 'next/link'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -21,19 +23,28 @@ export default async function Home() {
         </div>
 
         {user ? (
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle>プラン作成</CardTitle>
-              <CardDescription>
-                位置情報、予算、カテゴリ、時間を入力してください
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                プラン作成フォームは準備中です
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle>プラン作成</CardTitle>
+                <CardDescription>
+                  位置情報、予算、カテゴリ、時間を入力してください
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PlanForm />
+              </CardContent>
+            </Card>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/history"
+                className="text-blue-600 hover:underline"
+              >
+                過去のプランを見る →
+              </Link>
+            </div>
+          </>
         ) : (
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6">

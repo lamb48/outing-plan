@@ -1,4 +1,4 @@
-import { createTool } from '@mastra/core'
+import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
 
 /**
@@ -30,8 +30,8 @@ export const searchNearbyPlacesTool = createTool({
   id: 'search_nearby_places',
   description: '指定されたエリアとカテゴリで周辺スポットを検索します。レストラン、カフェ、観光地、博物館、公園などを見つけることができます。',
   inputSchema: searchNearbyPlacesSchema,
-  execute: async ({ context }) => {
-    const { latitude, longitude, category, radius, maxResults } = context
+  execute: async (inputData) => {
+    const { latitude, longitude, category, radius, maxResults } = inputData
 
     const apiKey = process.env.GOOGLE_PLACES_API_KEY
     if (!apiKey) {
@@ -39,8 +39,8 @@ export const searchNearbyPlacesTool = createTool({
     }
 
     try {
-      // Google Places API (New) - Text Search
-      const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      // Google Places API (New) - Nearby Search
+      const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,8 +48,8 @@ export const searchNearbyPlacesTool = createTool({
           'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.photos,places.types',
         },
         body: JSON.stringify({
-          textQuery: `${category} near ${latitude},${longitude}`,
-          locationBias: {
+          includedTypes: [category],
+          locationRestriction: {
             circle: {
               center: {
                 latitude,
@@ -115,8 +115,8 @@ export const calculateDistanceTool = createTool({
   id: 'calculate_distance',
   description: '2つの地点間の直線距離を計算します（メートル単位）',
   inputSchema: calculateDistanceSchema,
-  execute: async ({ context }) => {
-    const { lat1, lng1, lat2, lng2 } = context
+  execute: async (inputData) => {
+    const { lat1, lng1, lat2, lng2 } = inputData
 
     // Haversine formula
     const R = 6371e3 // Earth radius in meters

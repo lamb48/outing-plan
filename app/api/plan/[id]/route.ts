@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import prisma from '@/lib/prisma'
 
 /**
  * GET /api/plan/[id]
@@ -24,33 +23,34 @@ export async function GET(
       )
     }
 
-    // プラン取得
-    const plan = await prisma.plan.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
+    // プラン取得（RLSにより自動的に所有権チェック）
+    const { data: plan, error } = await supabase
+      .from('plans')
+      .select(`
+        id,
+        title,
+        budget,
+        category,
+        duration_hours,
+        area_lat,
+        area_lng,
+        spots,
+        created_at,
+        user_id,
+        users (
+          id,
+          email,
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq('id', id)
+      .single()
 
-    if (!plan) {
+    if (error || !plan) {
       return NextResponse.json(
         { error: 'Plan not found' },
         { status: 404 }
-      )
-    }
-
-    // 自分のプランかチェック（RLSと同様のチェック）
-    if (plan.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       )
     }
 
@@ -61,12 +61,12 @@ export async function GET(
         title: plan.title,
         budget: plan.budget,
         category: plan.category,
-        durationHours: plan.durationHours,
-        areaLat: plan.areaLat,
-        areaLng: plan.areaLng,
+        durationHours: plan.duration_hours,
+        areaLat: plan.area_lat,
+        areaLng: plan.area_lng,
         spots: plan.spots,
-        createdAt: plan.createdAt.toISOString(),
-        user: plan.user,
+        createdAt: plan.created_at,
+        user: Array.isArray(plan.users) ? plan.users[0] : plan.users,
       },
     })
 
