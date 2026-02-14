@@ -36,7 +36,8 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/auth") &&
-    request.nextUrl.pathname.startsWith("/history")
+    (request.nextUrl.pathname.startsWith("/history") ||
+      request.nextUrl.pathname.startsWith("/plan/"))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
