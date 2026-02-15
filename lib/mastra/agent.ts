@@ -26,7 +26,7 @@ export interface GeneratePlanParams {
   longitude: number;
   locationName?: string;
   budget: number;
-  category: string;
+  categories: string[];
   durationHours: number;
   startTime?: string;
   userId?: string;
@@ -200,7 +200,7 @@ export async function generateOutingPlan(params: GeneratePlanParams): Promise<Ge
       longitude: params.longitude,
       locationName: params.locationName,
       budget: params.budget,
-      category: params.category,
+      categories: params.categories,
       durationHours: params.durationHours,
     },
   });
