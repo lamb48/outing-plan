@@ -9,13 +9,14 @@ export interface Category {
 }
 
 export const CATEGORIES: Category[] = [
-  { value: "レストラン", label: "レストラン", placesType: "restaurant" },
+  { value: "グルメ", label: "グルメ", placesType: "restaurant" },
   { value: "カフェ", label: "カフェ", placesType: "cafe" },
   { value: "観光地", label: "観光地", placesType: "tourist_attraction" },
   { value: "博物館", label: "博物館・美術館", placesType: "museum" },
-  { value: "公園", label: "公園", placesType: "park" },
+  { value: "公園", label: "公園・自然", placesType: "park" },
   { value: "ショッピング", label: "ショッピング", placesType: "shopping_mall" },
-  { value: "グルメ", label: "グルメ巡り", placesType: "restaurant" },
+  { value: "娯楽", label: "娯楽施設", placesType: "amusement_park" },
+  { value: "バー", label: "バー・居酒屋", placesType: "bar" },
 ];
 
 const categoryMap = CATEGORIES.reduce(
@@ -42,4 +43,18 @@ export function mapCategoryToPlacesType(category: string): string {
 
 export function mapPlacesTypeToCategory(placesType: string): string {
   return reverseCategoryMap[placesType] || placesType;
+}
+
+/**
+ * 複数カテゴリーをPlaces APIタイプ配列に変換
+ */
+export function mapCategoriesToPlacesTypes(categories: string[]): string[] {
+  return categories.map((cat) => mapCategoryToPlacesType(cat));
+}
+
+/**
+ * Places APIタイプ配列をカテゴリー配列に変換
+ */
+export function mapPlacesTypesToCategories(placesTypes: string[]): string[] {
+  return placesTypes.map((type) => mapPlacesTypeToCategory(type));
 }
