@@ -9,18 +9,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Footprints, Mail, Lock } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import { translateAuthError } from "@/lib/auth-errors";
 import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
+import { Header } from "@/components/layout/Header";
 
 const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -98,6 +92,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen">
+      <Header user={null} />
       <div
         className="fixed inset-0 bg-cover bg-center"
         style={{
@@ -107,20 +102,12 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-black/50" />
       </div>
 
-      <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="relative flex min-h-screen items-center justify-center p-4 pt-20">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="space-y-3">
-            <div className="flex items-center justify-center gap-3">
-              <div className="rounded-xl bg-cyan-500 p-2">
-                <Footprints className="h-7 w-7 text-white" />
-              </div>
-              <CardTitle className="text-2xl font-semibold text-gray-800 sm:text-3xl">
-                おでかけプランナー
-              </CardTitle>
-            </div>
-            <CardDescription className="text-center text-base">
-              あなたにぴったりのプランを作成します
-            </CardDescription>
+            <CardTitle className="text-center text-xl font-semibold text-gray-700 sm:text-2xl">
+              ログイン
+            </CardTitle>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
