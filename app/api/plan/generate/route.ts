@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateOutingPlan } from "@/lib/mastra/agent";
 import { flushLangfuse } from "@/lib/langfuse";
 import { mapCategoryToPlacesType } from "@/lib/categories";
+import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit";
 
 /**
  * プラン生成リクエストのバリデーションスキーマ
@@ -13,7 +14,7 @@ const generatePlanSchema = z.object({
   longitude: z.number().min(-180).max(180),
   locationName: z.string().optional(),
   budget: z.number().min(0).max(1000000),
-  category: z.string().min(1),
+  categories: z.array(z.string()).min(1).max(8),
   durationHours: z.number().min(0.5).max(24),
   startTime: z.string().optional(),
 });
@@ -42,6 +43,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // レート制限チェック
+    const clientIp = getClientIp(request);
+    const rateLimitResult = rateLimit(
+      `plan-generate:${clientIp}`,
+      RATE_LIMITS.PLAN_GENERATE.limit,
+      RATE_LIMITS.PLAN_GENERATE.windowMs,
+    );
+
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          error: "Too many requests",
+          message: "リクエストが多すぎます。しばらく待ってから再試行してください。",
+          retryAfter,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+            "X-RateLimit-Reset": String(Math.ceil(rateLimitResult.reset / 1000)),
+          },
+        },
+      );
+    }
+
     // リクエストボディのパース
     const body = await request.json();
 
@@ -60,45 +89,22 @@ export async function POST(request: NextRequest) {
     const params = validationResult.data;
 
     // カテゴリをGoogle Places APIのタイプに変換
-    const placesType = mapCategoryToPlacesType(params.category);
+    const placesTypes = params.categories.map((cat) => mapCategoryToPlacesType(cat));
 
-    // ユーザーレコードの確認・作成（auth.users と public.users の同期）
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (!existingUser) {
-      // 初回ログイン時にユーザーレコードを作成
-      const { error: insertError } = await supabase.from("users").insert({
-        id: user.id,
-        email: user.email!,
-        display_name: user.user_metadata?.full_name || user.email?.split("@")[0],
-        avatar_url: user.user_metadata?.avatar_url,
-      });
-
-      if (insertError) {
-        console.error("Error creating user:", insertError);
-        // ユーザー作成エラーは無視（既に存在する可能性）
-      }
-    }
-
-    // AIプラン生成（変換後のカテゴリを使用）
+    // AIプラン生成
     const plan = await generateOutingPlan({
       ...params,
-      category: placesType,
+      categories: placesTypes,
       userId: user.id,
     });
 
-    // DBに保存
     const { data: savedPlan, error: insertPlanError } = await supabase
       .from("plans")
       .insert({
         user_id: user.id,
         title: plan.title,
         budget: params.budget,
-        category: params.category,
+        categories: params.categories,
         duration_hours: params.durationHours,
         area_lat: params.latitude,
         area_lng: params.longitude,
@@ -120,7 +126,7 @@ export async function POST(request: NextRequest) {
         id: savedPlan.id,
         title: savedPlan.title,
         budget: savedPlan.budget,
-        category: savedPlan.category,
+        categories: savedPlan.categories,
         durationHours: savedPlan.duration_hours,
         totalCost: plan.totalCost,
         totalDuration: plan.totalDuration,
@@ -131,19 +137,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error generating plan:", error);
 
-    // Langfuseバッファをフラッシュ（エラー時も）
     await flushLangfuse();
 
     const message = error instanceof Error ? error.message : "Unknown error";
     const isQuotaExceeded = /quota exceeded|rate limit|free_tier_requests/i.test(message);
     const retryAfterSeconds = parseRetryAfterSeconds(message);
+    const isDevelopment = process.env.NODE_ENV === "development";
 
     if (isQuotaExceeded) {
       return NextResponse.json(
         {
           error: "Rate limit exceeded",
           message: "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
-          details: message,
+          ...(isDevelopment && { details: message }),
           retryAfterSeconds,
         },
         {
@@ -156,7 +162,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to generate plan",
-        message,
+        message: isDevelopment ? message : "プランの生成に失敗しました",
       },
       { status: 500 },
     );
