@@ -3,12 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
-    remotePatterns: [
+    localPatterns: [
       {
-        protocol: "https",
-        hostname: "maps.googleapis.com",
-        pathname: "/maps/api/place/photo**",
+        pathname: "/api/place-photo/**",
       },
+    ],
+    remotePatterns: [
       {
         protocol: "https",
         hostname: "*.supabase.co",
