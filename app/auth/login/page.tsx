@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +17,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Footprints, Mail, Lock } from "lucide-react";
 import Link from "next/link";
+import { translateAuthError } from "@/lib/auth-errors";
+import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
 
 const loginSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -43,6 +46,15 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const errorMessage = searchParams.get("message");
+
+    if (errorParam === "callback_error") {
+      setError(errorMessage || "認証に失敗しました。もう一度お試しください。");
+    }
+  }, [searchParams]);
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
@@ -55,7 +67,7 @@ export default function LoginPage() {
     setIsLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(translateAuthError(error.message));
     } else {
       router.push("/");
       router.refresh();
@@ -85,84 +97,158 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">おでかけプラン</CardTitle>
-          <CardDescription className="text-center">
-            AIがあなたの最適なおでかけプランを作成します
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {message === "check_email" && (
-              <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-600">
-                確認メールを送信しました。メールをご確認ください。
+    <div className="min-h-screen">
+      <div
+        className="fixed inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('${PUBLIC_IMAGES.heroBackground}')`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
+
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl">
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-center gap-3">
+              <div className="p-2 rounded-xl bg-cyan-500">
+                <Footprints className="h-7 w-7 text-white" />
               </div>
-            )}
+              <CardTitle className="text-2xl sm:text-3xl font-semibold text-gray-800">
+                おでかけプランナー
+              </CardTitle>
+            </div>
+            <CardDescription className="text-base text-center">
+              あなたにぴったりのプランを作成します
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+              {message === "check_email" && (
+                <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-600">
+                  確認メールを送信しました。メールをご確認ください。
+                </div>
+              )}
 
-            {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">メールアドレス</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@example.com"
-                {...register("email")}
+              <Button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isGoogleLoading}
+                className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300 hover:border-gray-400 font-medium shadow-sm transition-all duration-200 focus:ring-0 focus:outline-none"
+              >
+                {isGoogleLoading ? (
+                  <span>ログイン中...</span>
+                ) : (
+                  <span className="flex items-center justify-center gap-3">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g fill="none" fillRule="evenodd">
+                        <path
+                          d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
+                          fill="#EA4335"
+                        />
+                      </g>
+                    </svg>
+                    Googleでログイン
+                  </span>
+                )}
+              </Button>
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-gray-500 font-medium">または</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                  メールアドレス
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    {...register("email")}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠</span> {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                  パスワード
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    {...register("password")}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠</span> {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 focus:ring-0 focus:outline-none"
                 disabled={isLoading}
-              />
-              {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">パスワード</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="パスワードを入力"
-                {...register("password")}
-                disabled={isLoading}
-              />
-              {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "ログイン中..." : "ログイン"}
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+              >
+                {isLoading ? "ログイン中..." : "ログイン"}
+              </Button>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4 pt-6 pb-3">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-600">アカウントをお持ちでない方は</p>
+                <Link
+                  href="/auth/signup"
+                  className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+                >
+                  新規登録はこちら
+                </Link>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">または</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled={isGoogleLoading}
-              className="w-full"
-            >
-              {isGoogleLoading ? "ログイン中..." : "Googleでログイン"}
-            </Button>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <p className="text-center text-sm text-gray-600">
-              アカウントをお持ちでない方は{" "}
-              <Link href="/auth/signup" className="text-blue-600 hover:underline">
-                新規登録
-              </Link>
-            </p>
-            <p className="text-center text-xs text-gray-500">
-              ログインすることで、利用規約とプライバシーポリシーに同意したものとみなされます
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

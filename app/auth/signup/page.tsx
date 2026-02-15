@@ -17,7 +17,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Footprints, Mail, Lock } from "lucide-react";
 import Link from "next/link";
+import { translateAuthError } from "@/lib/auth-errors";
+import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
 
 const signupSchema = z
   .object({
@@ -42,6 +45,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const supabase = createClient();
 
   const {
@@ -59,83 +63,211 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
     });
 
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(translateAuthError(error.message));
     } else {
-      // メール確認が必要な場合
-      router.push("/auth/login?message=check_email");
+      router.push("/");
+      router.refresh();
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        console.error("Error signing up:", error.message);
+        setError("アカウント作成に失敗しました");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("エラーが発生しました");
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">新規登録</CardTitle>
-          <CardDescription>メールアドレスとパスワードでアカウントを作成</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+    <div className="min-h-screen">
+      <div
+        className="fixed inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('${PUBLIC_IMAGES.heroBackground}')`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">メールアドレス</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@example.com"
-                {...register("email")}
-                disabled={loading}
-              />
-              {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
+      <div className="relative flex min-h-screen items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl">
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-center gap-3">
+              <div className="p-2 rounded-xl bg-cyan-500">
+                <Footprints className="h-7 w-7 text-white" />
+              </div>
+              <CardTitle className="text-2xl sm:text-3xl font-semibold text-gray-800">
+                おでかけプランナー
+              </CardTitle>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">パスワード</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="8文字以上、英大小数字記号を含む"
-                {...register("password")}
-                disabled={loading}
-              />
-              {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">パスワード（確認）</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="もう一度入力してください"
-                {...register("confirmPassword")}
-                disabled={loading}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+            <CardDescription className="text-base text-center">
+              あなたにぴったりのプランを作成します
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  {error}
+                </div>
               )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "登録中..." : "登録"}
-            </Button>
-            <p className="text-center text-sm text-gray-600">
-              既にアカウントをお持ちですか？{" "}
-              <Link href="/auth/login" className="text-blue-600 hover:underline">
-                ログイン
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+
+              <Button
+                type="button"
+                onClick={handleGoogleSignup}
+                disabled={isGoogleLoading}
+                className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300 hover:border-gray-400 font-medium shadow-sm transition-all duration-200 focus:ring-0 focus:outline-none"
+              >
+                {isGoogleLoading ? (
+                  <span>アカウント作成中...</span>
+                ) : (
+                  <span className="flex items-center justify-center gap-3">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g fill="none" fillRule="evenodd">
+                        <path
+                          d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
+                          fill="#EA4335"
+                        />
+                      </g>
+                    </svg>
+                    Googleでアカウント作成
+                  </span>
+                )}
+              </Button>
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-gray-500 font-medium">または</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                  メールアドレス
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    {...register("email")}
+                    disabled={loading}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠</span> {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                  パスワード
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    {...register("password")}
+                    disabled={loading}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠</span> {errors.password.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 text-center">
+                  英大小文字・数字・記号をそれぞれ含めてください
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">
+                  パスワード（確認）
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    {...register("confirmPassword")}
+                    disabled={loading}
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠</span> {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 focus:ring-0 focus:outline-none"
+                disabled={loading}
+              >
+                {loading ? "登録中..." : "アカウントを作成"}
+              </Button>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4 pt-6 pb-3">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-600">既にアカウントをお持ちですか？</p>
+                <Link
+                  href="/auth/login"
+                  className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+                >
+                  ログインはこちら
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

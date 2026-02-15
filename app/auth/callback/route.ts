@@ -23,8 +23,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}${next}`);
       }
     }
+
+    const errorMessage = error?.message || "認証処理中にエラーが発生しました";
+    return NextResponse.redirect(
+      `${origin}/auth/login?error=callback_error&message=${encodeURIComponent(errorMessage)}`,
+    );
   }
 
-  // エラーの場合はログインページに戻る
-  return NextResponse.redirect(`${origin}/auth/login?error=callback_error`);
+  return NextResponse.redirect(
+    `${origin}/auth/login?error=callback_error&message=${encodeURIComponent("認証コードが見つかりません")}`,
+  );
 }
