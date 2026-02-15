@@ -1,18 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Footprints, History } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface HeaderProps {
@@ -29,45 +28,53 @@ export function Header({ user }: HeaderProps) {
     router.refresh();
   };
 
-  const getInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase();
+  const getDisplayName = (user: SupabaseUser) => {
+    return user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
   };
 
-  const getDisplayName = (user: SupabaseUser) => {
-    return user.user_metadata?.full_name || user.email?.split("@")[0] || "ユーザー";
+  const getUserAvatar = (user: SupabaseUser) => {
+    return user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-blue-600">おでかけプラン</h1>
-        </div>
+    <header className="fixed top-0 w-full z-50 bg-white shadow-sm border-b border-gray-100">
+      <div className="w-full px-4 sm:px-6 md:px-8 py-4 sm:py-5">
+        <div className="flex items-center justify-between">
+          {/* ロゴ */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-500">
+              <Footprints className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </div>
+            <span className="text-base sm:text-lg font-semibold text-gray-900">
+              おでかけプランナー
+            </span>
+          </Link>
 
-        <div className="flex items-center gap-4">
-          {user ? (
-            <>
-              <span className="hidden text-sm text-gray-600 sm:inline-block">
-                {getDisplayName(user)}
-              </span>
-              <DropdownMenu>
+          {/* ナビゲーション */}
+          {user && (
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+              <Link
+                href="/history"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm sm:text-base md:text-lg text-gray-700 hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
+              >
+                <History className="h-6 w-6 sm:h-7 sm:w-7" />
+                <span className="hidden sm:inline">履歴</span>
+              </Link>
+              <DropdownMenu key={user.id}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-10 w-10 rounded-full"
-                    suppressHydrationWarning
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {user.email ? getInitials(user.email) : <User className="h-4 w-4" />}
+                  <button className="rounded-full focus:outline-none" suppressHydrationWarning>
+                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                      <AvatarImage src={getUserAvatar(user)} alt={getDisplayName(user)} />
+                      <AvatarFallback className="bg-cyan-500 text-white text-xs sm:text-sm">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5" />
                       </AvatarFallback>
                     </Avatar>
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel>マイアカウント</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5 text-sm text-gray-600">{user.email}</div>
+                <DropdownMenuContent align="end" className="w-56 mt-1">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -75,9 +82,7 @@ export function Header({ user }: HeaderProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
-          ) : (
-            <Button onClick={() => router.push("/auth/login")}>ログイン</Button>
+            </div>
           )}
         </div>
       </div>
