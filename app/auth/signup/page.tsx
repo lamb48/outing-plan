@@ -189,6 +189,7 @@ export default function SignupPage() {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("email")}
                     disabled={loading}
@@ -210,6 +211,7 @@ export default function SignupPage() {
                   <Input
                     id="password"
                     type="password"
+                    autoComplete="new-password"
                     className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("password")}
                     disabled={loading}
@@ -234,6 +236,7 @@ export default function SignupPage() {
                   <Input
                     id="confirmPassword"
                     type="password"
+                    autoComplete="new-password"
                     className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("confirmPassword")}
                     disabled={loading}

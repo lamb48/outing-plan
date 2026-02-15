@@ -194,6 +194,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("email")}
                     disabled={isLoading}
@@ -215,6 +216,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
+                    autoComplete="current-password"
                     className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("password")}
                     disabled={isLoading}
