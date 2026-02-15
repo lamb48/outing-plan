@@ -32,8 +32,8 @@ function SortButton({ label, direction, onClick }: SortButtonProps) {
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
         isActive
-          ? "bg-cyan-500 text-white hover:bg-cyan-600"
-          : "border-gray-200 bg-white text-gray-700 hover:border-cyan-300 hover:bg-cyan-50"
+          ? "bg-gray-200 text-gray-900 hover:bg-gray-300"
+          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-100"
       }`}
     >
       <span>{label}</span>

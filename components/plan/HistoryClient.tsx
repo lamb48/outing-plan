@@ -136,7 +136,7 @@ export function HistoryClient({ initialPlans, initialPagination }: HistoryClient
   return (
     <>
       {/* ソートUI */}
-      <div className="mb-6 flex justify-center md:justify-end">
+      <div className="mb-6 flex justify-center md:mt-8 md:justify-end">
         <HistorySort value={sortState} onChange={setSortState} />
       </div>
 
