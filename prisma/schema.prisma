@@ -29,7 +29,7 @@ model Plan {
   userId        String   @map("user_id")
   title         String
   budget        Int
-  category      String
+  categories    String[]
   durationHours Float    @map("duration_hours")
   areaLat       Float    @map("area_lat")
   areaLng       Float    @map("area_lng")
