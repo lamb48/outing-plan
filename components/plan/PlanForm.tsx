@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Clock, Heart } from "lucide-react";
+import { DollarSign, Clock, Heart, Loader2 } from "lucide-react";
 import { FilterCard } from "@/components/plan/FilterCard";
 import { BudgetFilterDialog } from "@/components/plan/BudgetFilterDialog";
 import { TimeFilterDialog } from "@/components/plan/TimeFilterDialog";
@@ -120,10 +120,17 @@ export function PlanForm() {
           submitButton={
             <Button
               type="submit"
-              className="rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-600 sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-2.5 md:text-base"
+              className="rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-600 disabled:opacity-50 sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-2.5 md:text-base"
               disabled={isLoading}
             >
-              {isLoading ? "生成中..." : "プラン作成"}
+              {isLoading ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  生成中...
+                </span>
+              ) : (
+                "プラン作成"
+              )}
             </Button>
           }
         />
