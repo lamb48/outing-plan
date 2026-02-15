@@ -77,7 +77,11 @@ export async function GET(request: NextRequest) {
         const spots = Array.isArray(plan.spots)
           ? (plan.spots as Array<{ photoReference?: string }>)
           : [];
-        const firstSpot = spots[0];
+        // 画像を持つスポットから最大6件の画像URLを取得
+        const thumbnailUrls = spots
+          .filter((spot) => spot.photoReference)
+          .slice(0, 6)
+          .map((spot) => getPlacePhotoUrl(spot.photoReference!, 400));
 
         return {
           id: plan.id,
@@ -88,9 +92,7 @@ export async function GET(request: NextRequest) {
           areaLat: plan.area_lat,
           areaLng: plan.area_lng,
           spotsCount: spots.length,
-          thumbnailUrl: firstSpot?.photoReference
-            ? getPlacePhotoUrl(firstSpot.photoReference, 400)
-            : undefined,
+          thumbnailUrls,
           createdAt: plan.created_at,
         };
       }),

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Footprints, History } from "lucide-react";
+import { LogOut, User, Footprints, History, Home } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface HeaderProps {
@@ -20,6 +20,7 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const handleLogout = async () => {
@@ -35,6 +36,9 @@ export function Header({ user }: HeaderProps) {
   const getUserAvatar = (user: SupabaseUser) => {
     return user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
   };
+
+  const isHistoryPage = pathname === "/history";
+  const isHomePage = pathname === "/";
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white shadow-sm">
@@ -52,14 +56,27 @@ export function Header({ user }: HeaderProps) {
 
           {/* ナビゲーション */}
           {user && (
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <Link
-                href="/history"
-                className="hover:bg-accent hover:text-accent-foreground flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-gray-700 transition-colors sm:gap-2 sm:px-3 sm:py-2 sm:text-base md:px-4 md:text-lg"
-              >
-                <History className="h-6 w-6 sm:h-7 sm:w-7" />
-                <span className="hidden sm:inline">履歴</span>
-              </Link>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/"
+                  className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-gray-700 transition-colors sm:gap-2 sm:px-3 sm:py-2 sm:text-base md:px-4 md:text-lg ${
+                    isHomePage ? "bg-cyan-50 text-cyan-700" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <Home className="h-6 w-6 sm:h-7 sm:w-7" />
+                  <span className="hidden sm:inline">ホーム</span>
+                </Link>
+                <Link
+                  href="/history"
+                  className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-gray-700 transition-colors sm:gap-2 sm:px-3 sm:py-2 sm:text-base md:px-4 md:text-lg ${
+                    isHistoryPage ? "bg-cyan-50 text-cyan-700" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <History className="h-6 w-6 sm:h-7 sm:w-7" />
+                  <span className="hidden sm:inline">履歴</span>
+                </Link>
+              </div>
               <DropdownMenu key={user.id}>
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full focus:outline-none" suppressHydrationWarning>
