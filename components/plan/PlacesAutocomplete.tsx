@@ -49,7 +49,7 @@ export function PlacesAutocomplete({
         if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
           console.log("Loading Google Maps script...");
           const script = document.createElement("script");
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ja`;
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ja&loading=async`;
           script.async = true;
           script.defer = true;
           document.head.appendChild(script);
