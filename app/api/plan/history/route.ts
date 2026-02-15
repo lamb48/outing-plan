@@ -103,15 +103,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching plan history:", error);
-    const isDevelopment = process.env.NODE_ENV === "development";
     return NextResponse.json(
       {
         error: "Failed to fetch plan history",
-        message: isDevelopment
-          ? error instanceof Error
-            ? error.message
-            : "Unknown error"
-          : "プラン履歴の取得に失敗しました",
+        message: "プラン履歴の取得に失敗しました",
       },
       { status: 500 },
     );

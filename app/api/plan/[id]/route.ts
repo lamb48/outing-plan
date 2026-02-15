@@ -96,15 +96,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   } catch (error) {
     console.error("Error fetching plan:", error);
-    const isDevelopment = process.env.NODE_ENV === "development";
     return NextResponse.json(
       {
         error: "Failed to fetch plan",
-        message: isDevelopment
-          ? error instanceof Error
-            ? error.message
-            : "Unknown error"
-          : "プランの取得に失敗しました",
+        message: "プランの取得に失敗しました",
       },
       { status: 500 },
     );

@@ -142,14 +142,12 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const isQuotaExceeded = /quota exceeded|rate limit|free_tier_requests/i.test(message);
     const retryAfterSeconds = parseRetryAfterSeconds(message);
-    const isDevelopment = process.env.NODE_ENV === "development";
 
     if (isQuotaExceeded) {
       return NextResponse.json(
         {
           error: "Rate limit exceeded",
           message: "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
-          ...(isDevelopment && { details: message }),
           retryAfterSeconds,
         },
         {
@@ -162,7 +160,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to generate plan",
-        message: isDevelopment ? message : "プランの生成に失敗しました",
+        message: "プランの生成に失敗しました",
       },
       { status: 500 },
     );
