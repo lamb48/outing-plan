@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/categories";
 
@@ -49,6 +55,7 @@ export function CategoryFilterDialog({
           <DialogTitle className="text-base text-gray-500">
             興味のあるカテゴリを選択してください
           </DialogTitle>
+          <DialogDescription className="sr-only">複数のカテゴリを選択できます</DialogDescription>
         </DialogHeader>
         <div className="space-y-6 pt-6 pb-2">
           <div className="grid grid-cols-2 gap-3">

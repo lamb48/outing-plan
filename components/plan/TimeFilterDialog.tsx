@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +37,9 @@ export function TimeFilterDialog({ open, onOpenChange, value, onChange }: TimeFi
       <DialogContent className="rounded-2xl shadow-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base text-gray-500">滞在時間を設定してください</DialogTitle>
+          <DialogDescription className="sr-only">
+            スライダーを使って希望の滞在時間を選択できます
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-8 pt-6 pb-2">
           <div className="space-y-4">
