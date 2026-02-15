@@ -28,13 +28,13 @@ export function TimeFilterDialog({ open, onOpenChange, value, onChange }: TimeFi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl shadow-xl">
+      <DialogContent className="rounded-2xl shadow-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base text-gray-500">滞在時間を設定してください</DialogTitle>
         </DialogHeader>
         <div className="space-y-8 pt-6 pb-2">
           <div className="space-y-4">
-            <div className="flex justify-center items-center">
+            <div className="flex items-center justify-center">
               <span className="text-4xl font-bold text-gray-700">{localValue}時間</span>
             </div>
             <Slider
@@ -43,7 +43,7 @@ export function TimeFilterDialog({ open, onOpenChange, value, onChange }: TimeFi
               step={0.5}
               value={[localValue]}
               onValueChange={(values) => setLocalValue(values[0])}
-              className="**:data-[slot=slider-range]:bg-cyan-500 **:data-[slot=slider-thumb]:border-cyan-500 **:data-[slot=slider-thumb]:w-5 **:data-[slot=slider-thumb]:h-5"
+              className="**:data-[slot=slider-range]:bg-cyan-500 **:data-[slot=slider-thumb]:h-5 **:data-[slot=slider-thumb]:w-5 **:data-[slot=slider-thumb]:border-cyan-500"
             />
           </div>
           <div className="flex justify-end gap-3">
@@ -56,7 +56,7 @@ export function TimeFilterDialog({ open, onOpenChange, value, onChange }: TimeFi
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6 shadow-md font-semibold"
+              className="rounded-full bg-cyan-500 px-6 font-semibold text-white shadow-md hover:bg-cyan-600"
             >
               設定
             </Button>

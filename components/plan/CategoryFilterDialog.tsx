@@ -44,7 +44,7 @@ export function CategoryFilterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl shadow-xl">
+      <DialogContent className="rounded-2xl shadow-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base text-gray-500">
             興味のあるカテゴリを選択してください
@@ -56,9 +56,9 @@ export function CategoryFilterDialog({
               <Button
                 key={cat.value}
                 variant="outline"
-                className={`justify-start rounded-full focus-visible:outline-none focus-visible:ring-0 ${
+                className={`justify-start rounded-full focus-visible:ring-0 focus-visible:outline-none ${
                   localValue.includes(cat.value)
-                    ? "bg-cyan-50 border-cyan-500 text-cyan-600 hover:bg-cyan-50 hover:text-cyan-600 focus-visible:border-cyan-500"
+                    ? "border-cyan-500 bg-cyan-50 text-cyan-600 hover:bg-cyan-50 hover:text-cyan-600 focus-visible:border-cyan-500"
                     : "hover:bg-transparent hover:text-current"
                 }`}
                 onClick={() => toggleCategory(cat.value)}
@@ -77,7 +77,7 @@ export function CategoryFilterDialog({
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6 shadow-md font-semibold"
+              className="rounded-full bg-cyan-500 px-6 font-semibold text-white shadow-md hover:bg-cyan-600"
             >
               設定
             </Button>

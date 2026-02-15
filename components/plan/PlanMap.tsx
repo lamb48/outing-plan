@@ -89,9 +89,9 @@ export function PlanMap({ spots, className }: PlanMapProps) {
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}>
-        <div className="text-center p-8">
-          <p className="text-red-600 font-medium mb-2">地図の読み込みに失敗しました</p>
+      <div className={`flex items-center justify-center rounded-lg bg-gray-100 ${className}`}>
+        <div className="p-8 text-center">
+          <p className="mb-2 font-medium text-red-600">地図の読み込みに失敗しました</p>
           <p className="text-sm text-gray-600">{error.message}</p>
         </div>
       </div>
@@ -101,14 +101,14 @@ export function PlanMap({ spots, className }: PlanMapProps) {
   return (
     <div className={`relative ${className}`}>
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg z-10">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-gray-100">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+            <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-blue-600" />
             <p className="text-sm text-gray-600">地図を読み込み中...</p>
           </div>
         </div>
       )}
-      <div ref={mapRef} className="w-full h-full rounded-lg" />
+      <div ref={mapRef} className="h-full w-full rounded-lg" />
     </div>
   );
 }

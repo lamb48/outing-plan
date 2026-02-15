@@ -111,14 +111,14 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="space-y-3">
             <div className="flex items-center justify-center gap-3">
-              <div className="p-2 rounded-xl bg-cyan-500">
+              <div className="rounded-xl bg-cyan-500 p-2">
                 <Footprints className="h-7 w-7 text-white" />
               </div>
-              <CardTitle className="text-2xl sm:text-3xl font-semibold text-gray-800">
+              <CardTitle className="text-2xl font-semibold text-gray-800 sm:text-3xl">
                 おでかけプランナー
               </CardTitle>
             </div>
-            <CardDescription className="text-base text-center">
+            <CardDescription className="text-center text-base">
               あなたにぴったりのプランを作成します
             </CardDescription>
           </CardHeader>
@@ -131,7 +131,7 @@ export default function LoginPage() {
               )}
 
               {error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   {error}
                 </div>
               )}
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading}
-                className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300 hover:border-gray-400 font-medium shadow-sm transition-all duration-200 focus:ring-0 focus:outline-none"
+                className="h-12 w-full border-2 border-gray-300 bg-white font-medium text-gray-700 shadow-sm transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:ring-0 focus:outline-none"
               >
                 {isGoogleLoading ? (
                   <span>ログイン中...</span>
@@ -181,7 +181,7 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-gray-500 font-medium">または</span>
+                  <span className="bg-white px-4 font-medium text-gray-500">または</span>
                 </div>
               </div>
 
@@ -190,17 +190,17 @@ export default function LoginPage() {
                   メールアドレス
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
-                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("email")}
                     disabled={isLoading}
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-sm text-red-600">
                     <span>⚠</span> {errors.email.message}
                   </p>
                 )}
@@ -211,17 +211,17 @@ export default function LoginPage() {
                   パスワード
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Lock className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <Input
                     id="password"
                     type="password"
-                    className="h-11 pl-10 border-gray-300 focus:border-cyan-500 focus:ring-0 focus:outline-none"
+                    className="h-11 border-gray-300 pl-10 focus:border-cyan-500 focus:ring-0 focus:outline-none"
                     {...register("password")}
                     disabled={isLoading}
                   />
                 </div>
                 {errors.password && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-sm text-red-600">
                     <span>⚠</span> {errors.password.message}
                   </p>
                 )}
@@ -229,18 +229,18 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 focus:ring-0 focus:outline-none"
+                className="h-12 w-full bg-cyan-500 font-semibold text-white shadow-lg transition-all duration-200 hover:bg-cyan-600 hover:shadow-xl focus:ring-0 focus:outline-none"
                 disabled={isLoading}
               >
                 {isLoading ? "ログイン中..." : "ログイン"}
               </Button>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-6 pb-3">
-              <div className="text-center space-y-2">
+              <div className="space-y-2 text-center">
                 <p className="text-sm text-gray-600">アカウントをお持ちでない方は</p>
                 <Link
                   href="/auth/signup"
-                  className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+                  className="font-medium text-cyan-600 transition-colors hover:text-cyan-700"
                 >
                   新規登録はこちら
                 </Link>

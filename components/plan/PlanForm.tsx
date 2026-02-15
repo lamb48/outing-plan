@@ -102,7 +102,7 @@ export function PlanForm() {
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="rounded-2xl bg-red-50 px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-medium text-red-600">
+          <div className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-medium text-red-600 sm:px-6 sm:py-4 sm:text-base">
             {error}
           </div>
         )}
@@ -120,7 +120,7 @@ export function PlanForm() {
           submitButton={
             <Button
               type="submit"
-              className="rounded-full bg-cyan-500 hover:bg-cyan-600 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 text-xs sm:text-sm md:text-base font-semibold"
+              className="rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-600 sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-2.5 md:text-base"
               disabled={isLoading}
             >
               {isLoading ? "生成中..." : "プラン作成"}
@@ -131,7 +131,7 @@ export function PlanForm() {
         <input type="hidden" {...register("latitude", { valueAsNumber: true })} />
         <input type="hidden" {...register("longitude", { valueAsNumber: true })} />
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-stretch">
+        <div className="grid grid-cols-3 items-stretch gap-2 sm:gap-3 md:gap-4">
           <FilterCard
             icon={<DollarSign size={18} />}
             label="予算"

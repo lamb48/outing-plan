@@ -163,16 +163,16 @@ export function PlacesAutocomplete({
   }, [value]);
 
   return (
-    <div className="relative flex items-center gap-2 sm:gap-3 bg-white rounded-full px-3 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 shadow-lg">
-      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-gray-500 shrink-0" />
+    <div className="relative flex items-center gap-2 rounded-full bg-white px-3 py-3 shadow-lg sm:gap-3 sm:px-6 sm:py-4 md:px-8 md:py-5">
+      <MapPin className="h-4 w-4 shrink-0 text-gray-500 sm:h-5 sm:w-5 md:h-6 md:w-6" />
 
       {error ? (
-        <div className="flex-1 flex items-center gap-2 text-red-500">
+        <div className="flex flex-1 items-center gap-2 text-red-500">
           <span className="text-xs sm:text-sm md:text-base">{error}</span>
         </div>
       ) : isLoading ? (
-        <div className="flex-1 flex items-center gap-2 text-gray-400">
-          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 animate-spin" />
+        <div className="flex flex-1 items-center gap-2 text-gray-400">
+          <Loader2 className="h-3 w-3 animate-spin sm:h-4 sm:w-4 md:h-5 md:w-5" />
           <span className="text-xs sm:text-sm md:text-base">読み込み中...</span>
         </div>
       ) : (
@@ -180,7 +180,7 @@ export function PlacesAutocomplete({
           ref={inputRef}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="flex-1 border-0 bg-transparent text-xs sm:text-sm md:text-base font-medium focus-visible:ring-0 focus-visible:ring-offset-0 pl-1 pr-0 placeholder:text-gray-400 placeholder:font-normal text-gray-800"
+          className="flex-1 border-0 bg-transparent pr-0 pl-1 text-xs font-medium text-gray-800 placeholder:font-normal placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-sm md:text-base"
           placeholder="どこから出発しますか？"
           disabled={disabled || isLoading}
         />
@@ -193,12 +193,12 @@ export function PlacesAutocomplete({
           size="icon"
           onClick={onGetCurrentLocation}
           disabled={disabled || isGettingLocation}
-          className="shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10"
+          className="h-7 w-7 shrink-0 sm:h-8 sm:w-8 md:h-10 md:w-10"
         >
           {isGettingLocation ? (
-            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 animate-spin text-gray-700" />
+            <Loader2 className="h-3 w-3 animate-spin text-gray-700 sm:h-4 sm:w-4 md:h-5 md:w-5" />
           ) : (
-            <LocateFixed className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-700" />
+            <LocateFixed className="h-3 w-3 text-gray-700 sm:h-4 sm:w-4 md:h-5 md:w-5" />
           )}
         </Button>
       )}

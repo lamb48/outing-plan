@@ -24,11 +24,11 @@ export default async function Home() {
           >
             <div className="absolute inset-0 bg-black/40" />
 
-            <div className="relative container max-w-4xl mx-auto px-4 sm:px-6 md:px-8 h-full flex flex-col justify-center items-center text-center pt-20">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 tracking-tight leading-tight">
+            <div className="relative container mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-4 pt-20 text-center sm:px-6 md:px-8">
+              <h1 className="mb-4 text-3xl leading-tight font-extrabold tracking-tight text-white sm:mb-6 sm:text-4xl md:mb-8 md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl">
                 どこへおでかけしますか？
               </h1>
-              <p className="text-base sm:text-xl md:text-2xl font-light text-white/90 mb-6 sm:mb-10 md:mb-12 tracking-wide">
+              <p className="mb-6 text-base font-light tracking-wide text-white/90 sm:mb-10 sm:text-xl md:mb-12 md:text-2xl">
                 あなたにぴったりのプランを作成します
               </p>
 
@@ -48,17 +48,17 @@ export default async function Home() {
           >
             <div className="absolute inset-0 bg-black/50" />
 
-            <div className="relative container max-w-4xl mx-auto px-4 sm:px-6 md:px-8 h-full flex flex-col justify-center items-center text-center pt-20">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 tracking-tight leading-tight">
+            <div className="relative container mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-4 pt-20 text-center sm:px-6 md:px-8">
+              <h1 className="mb-4 text-3xl leading-tight font-extrabold tracking-tight text-white sm:mb-6 sm:text-4xl md:mb-8 md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl">
                 どこへおでかけしますか？
               </h1>
-              <p className="text-base sm:text-xl md:text-2xl font-light text-white/90 mb-6 sm:mb-10 md:mb-12 tracking-wide">
+              <p className="mb-6 text-base font-light tracking-wide text-white/90 sm:mb-10 sm:text-xl md:mb-12 md:text-2xl">
                 あなたにぴったりのプランを作成します
               </p>
 
               <Link
                 href="/auth/login"
-                className="inline-block rounded-full bg-cyan-500 hover:bg-cyan-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg font-semibold transition-colors shadow-lg"
+                className="inline-block rounded-full bg-cyan-500 px-6 py-3 text-base font-semibold text-white shadow-lg transition-colors hover:bg-cyan-600 sm:px-8 sm:py-4 sm:text-lg"
               >
                 ログインして始める
               </Link>
