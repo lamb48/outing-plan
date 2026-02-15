@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanForm } from "@/components/plan/PlanForm";
+import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
 import Link from "next/link";
 
 export default async function Home() {
@@ -11,59 +11,61 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       <Header user={user} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            AIがあなたの最適なおでかけプランを作成
-          </h2>
-          <p className="text-lg text-gray-600">
-            現在地と予算を入力するだけで、周辺スポットを組み合わせたプランを提案します
-          </p>
-        </div>
+      {user ? (
+        <main className="min-h-screen">
+          <div
+            className="relative h-screen bg-cover bg-center"
+            style={{
+              backgroundImage: `url('${PUBLIC_IMAGES.heroBackground}')`,
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40" />
 
-        {user ? (
-          <>
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>プラン作成</CardTitle>
-                <CardDescription>位置情報、予算、カテゴリ、時間を入力してください</CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div className="relative container max-w-4xl mx-auto px-4 sm:px-6 md:px-8 h-full flex flex-col justify-center items-center text-center pt-20">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 tracking-tight leading-tight">
+                どこへおでかけしますか？
+              </h1>
+              <p className="text-base sm:text-xl md:text-2xl font-light text-white/90 mb-6 sm:mb-10 md:mb-12 tracking-wide">
+                あなたにぴったりのプランを作成します
+              </p>
+
+              <div className="w-full max-w-2xl">
                 <PlanForm />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </div>
+        </main>
+      ) : (
+        <main className="min-h-screen">
+          <div
+            className="relative h-screen bg-cover bg-center"
+            style={{
+              backgroundImage: `url('${PUBLIC_IMAGES.heroBackground}')`,
+            }}
+          >
+            <div className="absolute inset-0 bg-black/50" />
 
-            <div className="mt-6 text-center">
-              <Link href="/history" className="text-blue-600 hover:underline">
-                過去のプランを見る →
+            <div className="relative container max-w-4xl mx-auto px-4 sm:px-6 md:px-8 h-full flex flex-col justify-center items-center text-center pt-20">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8 tracking-tight leading-tight">
+                どこへおでかけしますか？
+              </h1>
+              <p className="text-base sm:text-xl md:text-2xl font-light text-white/90 mb-6 sm:mb-10 md:mb-12 tracking-wide">
+                あなたにぴったりのプランを作成します
+              </p>
+
+              <Link
+                href="/auth/login"
+                className="inline-block rounded-full bg-cyan-500 hover:bg-cyan-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-base sm:text-lg font-semibold transition-colors shadow-lg"
+              >
+                ログインして始める
               </Link>
             </div>
-          </>
-        ) : (
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <p className="text-lg text-gray-600 mb-4">プランを作成するにはログインが必要です</p>
-                <a
-                  href="/auth/login"
-                  className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 transition-colors"
-                >
-                  ログインする
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {user && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">ログイン中: {user.email}</p>
           </div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 }
