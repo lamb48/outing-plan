@@ -51,10 +51,10 @@ export function HistoryClient({ initialPlans, initialPagination }: HistoryClient
     const plansCopy = [...plans];
 
     return plansCopy.sort((a, b) => {
-      // 作成日でソート
+      // 作成日でソート（日付のみ、時刻は無視）
       if (sortState.createdAt !== "none") {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const dateA = a.createdAt ? new Date(a.createdAt).setHours(0, 0, 0, 0) : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).setHours(0, 0, 0, 0) : 0;
         const comparison = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
         const result = sortState.createdAt === "asc" ? comparison : -comparison;
         if (result !== 0) return result;
