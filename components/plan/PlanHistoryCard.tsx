@@ -77,7 +77,7 @@ export function PlanHistoryCard({ plan }: PlanHistoryCardProps) {
           <h3 className="mb-3 line-clamp-2 text-lg font-semibold text-gray-900">{plan.title}</h3>
 
           {/* 情報グリッド */}
-          <div className="mt-auto grid grid-cols-2 gap-2 text-sm text-gray-600">
+          <div className="mt-auto grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               <span>¥{plan.budget.toLocaleString()}</span>
