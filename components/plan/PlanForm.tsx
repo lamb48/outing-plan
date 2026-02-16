@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Clock, Heart, Loader2 } from "lucide-react";
+import { Wallet, Clock, Heart, Loader2 } from "lucide-react";
 import { FilterCard } from "@/components/plan/FilterCard";
 import { BudgetFilterDialog } from "@/components/plan/BudgetFilterDialog";
 import { TimeFilterDialog } from "@/components/plan/TimeFilterDialog";
@@ -140,7 +140,7 @@ export function PlanForm() {
 
         <div className="grid grid-cols-3 items-stretch gap-2 sm:gap-3 md:gap-4">
           <FilterCard
-            icon={<DollarSign size={18} />}
+            icon={<Wallet size={18} />}
             label="予算"
             value={`¥${budget?.toLocaleString() || "5,000"}`}
             onClick={() => setShowBudgetDialog(true)}
