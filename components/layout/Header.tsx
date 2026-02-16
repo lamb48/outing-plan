@@ -77,7 +77,7 @@ export function Header({ user }: HeaderProps) {
                   <span className="hidden sm:inline">履歴</span>
                 </Link>
               </div>
-              <DropdownMenu key={user.id}>
+              <DropdownMenu key={user.id} modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full focus:outline-none" suppressHydrationWarning>
                     <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
