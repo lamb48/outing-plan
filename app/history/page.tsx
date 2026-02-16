@@ -48,6 +48,15 @@ async function getPlanHistory(limit = 12) {
       .slice(0, 6)
       .map((spot) => getPlacePhotoUrl(spot.photoReference!, 400));
 
+    // rating の平均を計算
+    const ratingsWithValue = spots
+      .filter((spot) => spot.rating !== undefined && spot.rating !== null)
+      .map((spot) => spot.rating!);
+    const averageRating =
+      ratingsWithValue.length > 0
+        ? ratingsWithValue.reduce((sum, rating) => sum + rating, 0) / ratingsWithValue.length
+        : undefined;
+
     return {
       id: plan.id,
       title: plan.title,
@@ -57,6 +66,7 @@ async function getPlanHistory(limit = 12) {
       spotsCount: spots.length,
       thumbnailUrls,
       createdAt: plan.created_at,
+      averageRating,
     };
   });
 

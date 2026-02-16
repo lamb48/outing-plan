@@ -75,13 +75,36 @@ export async function GET(request: NextRequest) {
       success: true,
       plans: (plans || []).map((plan) => {
         const spots = Array.isArray(plan.spots)
-          ? (plan.spots as Array<{ photoReference?: string }>)
+          ? (plan.spots as Array<{
+              placeId: string;
+              name: string;
+              address: string;
+              lat: number;
+              lng: number;
+              category: string;
+              rating?: number;
+              photoReference?: string;
+              estimatedDuration: number;
+              estimatedCost: number;
+              order: number;
+              arrivalTime: string;
+              departureTime: string;
+            }>)
           : [];
         // 画像を持つスポットから最大6件の画像URLを取得
         const thumbnailUrls = spots
           .filter((spot) => spot.photoReference)
           .slice(0, 6)
           .map((spot) => getPlacePhotoUrl(spot.photoReference!, 400));
+
+        // rating の平均を計算
+        const ratingsWithValue = spots
+          .filter((spot) => spot.rating !== undefined && spot.rating !== null)
+          .map((spot) => spot.rating!);
+        const averageRating =
+          ratingsWithValue.length > 0
+            ? ratingsWithValue.reduce((sum, rating) => sum + rating, 0) / ratingsWithValue.length
+            : undefined;
 
         return {
           id: plan.id,
@@ -94,6 +117,7 @@ export async function GET(request: NextRequest) {
           spotsCount: spots.length,
           thumbnailUrls,
           createdAt: plan.created_at,
+          averageRating,
         };
       }),
       pagination: {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Wallet, MapPin } from "lucide-react";
+import { Clock, Wallet, MapPin, Star } from "lucide-react";
 
 interface PlanHistoryCardProps {
   plan: {
@@ -15,6 +15,8 @@ interface PlanHistoryCardProps {
     durationHours: number;
     spotsCount: number;
     thumbnailUrls: string[];
+    createdAt?: string;
+    averageRating?: number;
   };
 }
 
@@ -70,28 +72,27 @@ export function PlanHistoryCard({ plan }: PlanHistoryCardProps) {
         </div>
 
         {/* カードコンテンツ */}
-        <div className="flex flex-1 flex-col space-y-3 p-4">
+        <div className="flex flex-1 flex-col p-4">
           {/* タイトル */}
-          <h3 className="line-clamp-2 text-lg font-semibold text-gray-900">{plan.title}</h3>
+          <h3 className="mb-3 line-clamp-2 text-lg font-semibold text-gray-900">{plan.title}</h3>
 
           {/* 情報グリッド */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {/* 予算 */}
-            <div className="flex items-center gap-1.5 text-gray-600">
+          <div className="mt-auto grid grid-cols-2 gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               <span>¥{plan.budget.toLocaleString()}</span>
             </div>
-
-            {/* 時間 */}
-            <div className="flex items-center gap-1.5 text-gray-600">
+            <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <span>{plan.durationHours}時間</span>
             </div>
-
-            {/* スポット数 */}
-            <div className="col-span-2 flex items-center gap-1.5 text-gray-600">
+            <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>{plan.spotsCount}スポット</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              <span>{plan.averageRating ? plan.averageRating.toFixed(1) : "-"}</span>
             </div>
           </div>
         </div>

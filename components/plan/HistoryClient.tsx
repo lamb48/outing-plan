@@ -16,6 +16,7 @@ interface PlanHistoryItem {
   spotsCount: number;
   thumbnailUrls: string[];
   createdAt: string;
+  averageRating?: number;
 }
 
 interface PaginationInfo {
