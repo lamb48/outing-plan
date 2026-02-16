@@ -28,10 +28,16 @@ export function PlacesAutocomplete({
   submitButton,
 }: PlacesAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const prevValueRef = useRef(value);
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState(value || "");
   const [error, setError] = useState<string | null>(null);
+  const [prevValue, setPrevValue] = useState(value);
+
+  // 外部からのvalue変更を内部状態に反映（派生state）
+  if (value !== undefined && value !== prevValue) {
+    setPrevValue(value);
+    setInputValue(value);
+  }
 
   useEffect(() => {
     const initAutocomplete = async () => {
@@ -152,15 +158,6 @@ export function PlacesAutocomplete({
 
     initAutocomplete();
   }, [onPlaceSelect]);
-
-  // 外部からのvalue変更を内部状態に反映
-  useEffect(() => {
-    if (value !== undefined && value !== prevValueRef.current) {
-      prevValueRef.current = value;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInputValue(value);
-    }
-  }, [value]);
 
   return (
     <div className="relative flex items-center gap-2 rounded-full bg-white px-3 py-3 shadow-lg sm:gap-3 sm:px-6 sm:py-4 md:px-8 md:py-5">
