@@ -20,14 +20,48 @@ interface PlanHistoryCardProps {
   };
 }
 
+// プランIDからシード値を生成する関数
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+
+// シード値を使った疑似乱数生成器
+function seededRandom(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
 export function PlanHistoryCard({ plan }: PlanHistoryCardProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // プランIDをシードにしてサムネイルURLをシャッフル
+  const shuffledIndices = useState(() => {
+    const indices = plan.thumbnailUrls.map((_, i) => i);
+    const seed = hashString(plan.id);
+    const random = seededRandom(seed);
+
+    // Fisher-Yatesアルゴリズムでシャッフル（決定的）
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  })[0];
+
+  const [tryCount, setTryCount] = useState(0);
   const [hasImageError, setHasImageError] = useState(false);
 
   const handleImageError = () => {
     // 次の画像候補を試す
-    if (currentImageIndex < plan.thumbnailUrls.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
+    if (tryCount < shuffledIndices.length - 1) {
+      setTryCount(tryCount + 1);
       setHasImageError(false);
     } else {
       // すべての画像で失敗した場合
@@ -35,7 +69,7 @@ export function PlanHistoryCard({ plan }: PlanHistoryCardProps) {
     }
   };
 
-  const currentThumbnailUrl = plan.thumbnailUrls[currentImageIndex];
+  const currentThumbnailUrl = plan.thumbnailUrls[shuffledIndices[tryCount]];
   const shouldShowImage = currentThumbnailUrl && !hasImageError;
 
   return (
