@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateOutingPlan } from "@/lib/mastra/agent";
 import { flushLangfuse } from "@/lib/langfuse";
 import { mapCategoryToPlacesType } from "@/lib/categories";
-import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit";
+import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit-supabase";
 
 /**
  * プラン生成リクエストのバリデーションスキーマ
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // レート制限チェック
     const clientIp = getClientIp(request);
-    const rateLimitResult = rateLimit(
+    const rateLimitResult = await rateLimit(
       `plan-generate:${clientIp}`,
       RATE_LIMITS.PLAN_GENERATE.limit,
       RATE_LIMITS.PLAN_GENERATE.windowMs,

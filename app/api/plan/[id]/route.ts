@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit";
 
 /**
  * GET /api/plan/[id]
@@ -19,34 +18,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // レート制限チェック
-    const clientIp = getClientIp(request);
-    const rateLimitResult = rateLimit(
-      `plan-read:${clientIp}`,
-      RATE_LIMITS.PLAN_READ.limit,
-      RATE_LIMITS.PLAN_READ.windowMs,
-    );
-
-    if (!rateLimitResult.success) {
-      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
-      return NextResponse.json(
-        {
-          error: "Too many requests",
-          message: "リクエストが多すぎます。しばらく待ってから再試行してください。",
-          retryAfter,
-        },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": String(retryAfter),
-            "X-RateLimit-Limit": String(rateLimitResult.limit),
-            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
-            "X-RateLimit-Reset": String(Math.ceil(rateLimitResult.reset / 1000)),
-          },
-        },
-      );
     }
 
     // プラン取得（RLSにより自動的に所有権チェック）

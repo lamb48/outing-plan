@@ -1,44 +1,47 @@
-// Prisma schema for outing-plan MVP
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ユーザーテーブル
 model User {
   id          String   @id @default(uuid())
   email       String   @unique
   displayName String?  @map("display_name")
   avatarUrl   String?  @map("avatar_url")
   createdAt   DateTime @default(now()) @map("created_at")
-
-  // リレーション
   plans       Plan[]
 
   @@map("users")
 }
 
-// プランテーブル
 model Plan {
-  id            String   @id @default(uuid())
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
   userId        String   @map("user_id")
   title         String
   budget        Int
-  categories    String[]
   durationHours Float    @map("duration_hours")
   areaLat       Float    @map("area_lat")
   areaLng       Float    @map("area_lng")
-  spots         Json     // SpotWithRoute[] 型のJSON
+  spots         Json
   createdAt     DateTime @default(now()) @map("created_at")
-
-  // リレーション
+  categories    String[]
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("plans")
+}
+
+model RateLimit {
+  identifier String   @id
+  count      Int      @default(1)
+  resetTime  DateTime @map("reset_time") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([resetTime])
+  @@map("rate_limits")
 }
