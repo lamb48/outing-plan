@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { PlanHistoryCard } from "@/components/plan/PlanHistoryCard";
-import { HistorySort, type SortState, type SortDirection } from "@/components/plan/HistorySort";
+import { HistorySort, type SortState } from "@/components/plan/HistorySort";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
 
 interface PlanHistoryItem {
   id: string;
@@ -142,9 +143,10 @@ export function HistoryClient({ initialPlans, initialPagination }: HistoryClient
 
       {/* プラン一覧 */}
       {sortedPlans.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-gray-600">まだプランが作成されていません</p>
-          <p className="mt-2 text-sm text-gray-500">新しいプランを作成してみましょう</p>
+        <div className="rounded-xl border border-gray-200 bg-white px-12 py-16 text-center shadow-sm">
+          <MapPin className="mx-auto mb-6 h-16 w-16 text-gray-300" />
+          <p className="mb-4 text-lg text-gray-900">まだプランがありません</p>
+          <p className="text-sm text-gray-600">新しいプランを作成してみましょう</p>
         </div>
       ) : (
         <>
