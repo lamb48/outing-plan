@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
@@ -50,6 +51,28 @@ async function getPlan(planId: string) {
     areaLng: plan.area_lng,
     spots: plan.spots as unknown as SpotWithRoute[],
     createdAt: plan.created_at,
+  };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const plan = await getPlan(id);
+
+  if (!plan) {
+    return {
+      title: "プランが見つかりません",
+    };
+  }
+
+  // カテゴリーを結合
+  const categoriesText = plan.categories.join("・");
+
+  // スポット数
+  const spotsCount = plan.spots.length;
+
+  return {
+    title: plan.title,
+    description: `${categoriesText} • 予算¥${plan.budget.toLocaleString()} • ${spotsCount}カ所のスポット`,
   };
 }
 

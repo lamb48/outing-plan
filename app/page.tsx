@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
 import { PlanForm } from "@/components/plan/PlanForm";
 import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "おでかけプラン作成 | OutingPlan",
+  description:
+    "あなたにぴったりのおでかけプランを簡単に作成できます。予算や時間に合わせた最適なスポットを提案します。",
+};
 
 export default async function Home() {
   const supabase = await createClient();

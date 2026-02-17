@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
 import { HistoryClient } from "@/components/plan/HistoryClient";
 import { getPlacePhotoUrl } from "@/lib/google-places-photos";
+
+export const metadata: Metadata = {
+  title: "プラン履歴",
+  description: "作成したおでかけプランの履歴を確認できます。",
+};
 
 interface SpotWithRoute {
   placeId: string;
