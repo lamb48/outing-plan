@@ -1,36 +1,151 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Outing Plan
 
-## Getting Started
+**AIエージェントを活用した外出プラン自動生成アプリケーション**
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.2.3-blue?logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
+[![Mastra](https://img.shields.io/badge/Mastra-1.3.0-purple)](https://mastra.ai)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## デモ
+
+### プラン生成フォーム
+
+![プラン生成フォーム](./public/demo/form.png)
+
+### プラン詳細・地図表示
+
+![プラン詳細](./public/demo/plan-detail.png)
+
+### プラン履歴
+
+![プラン履歴](./public/demo/history.png)
+
+---
+
+## 概要
+
+Google Gemini 2.5とMastraによる2段階AIエージェント処理で、ユーザーの条件（時間・予算・カテゴリ・目的地）に基づいた最適な外出プランを自動生成します。
+
+**プロジェクト規模**: 約10,357行、63ファイル、26コンポーネント
+
+---
+
+## 主な機能
+
+- **AIプラン生成**: 2段階エージェント（スポット検索 → 構造化）
+- **Google Maps統合**: マーカー・ルート表示、自動ズーム
+- **認証・履歴管理**: Supabase Auth、フィルタリング・ソート
+- **レート制限**: データベースベース（10req/分）
+- **モニタリング**: Langfuseトレーシング
+
+---
+
+## 技術スタック
+
+| カテゴリ           | 技術                                                               |
+| ------------------ | ------------------------------------------------------------------ |
+| **フロントエンド** | Next.js 16.1 (App Router), React 19, TypeScript 5, Tailwind CSS v4 |
+| **バックエンド**   | Next.js API Routes, Prisma 6.19, PostgreSQL (Supabase)             |
+| **AI**             | Mastra 1.3, Google Gemini 2.5 Flash-Lite, Langfuse 3.38            |
+| **外部API**        | Google Maps/Places/Directions API                                  |
+
+---
+
+## アーキテクチャ
+
+### 2段階AIエージェント処理
+
+```
+ユーザー入力
+  ↓
+バリデーション + レート制限
+  ↓
+Agent 1: スポット検索 (Google Places API)
+  ↓
+Agent 2: JSON構造化 (Strict JSON Mode)
+  ↓
+データベース保存 + Langfuseトレーシング
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 技術的特徴
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 型安全性
 
-## Learn More
+- TypeScript strict mode + Zod（リクエスト、フォーム、AIレスポンス）
 
-To learn more about Next.js, take a look at the following resources:
+### セキュリティ
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- セキュリティヘッダー、Supabase Auth (JWT + RLS)、Open Redirect対策
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### AI統合
 
-## Deploy on Vercel
+- 2段階処理で精度向上、Strict JSON Mode、Langfuseトレーシング
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### パフォーマンス
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- SSR、動的インポート、メタデータ最適化
+
+### コード品質
+
+- ESLint + Prettier、Huskyでコミット前自動チェック
+
+---
+
+## セットアップ
+
+### 前提条件
+
+- Node.js v20+、Supabase/Google Cloud/Langfuseアカウント
+
+### 手順
+
+```bash
+git clone https://github.com/lamb48/outing-plan.git
+cd outing-plan
+npm install
+cp .env.example .env.local  # APIキーを設定
+npx prisma generate
+npx prisma migrate dev
+npm run dev  # http://localhost:3000
+```
+
+### 環境変数
+
+`.env.local` に以下を設定:
+
+- `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `GOOGLE_PLACES_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY` (オプション)
+
+---
+
+## プロジェクト構成
+
+```
+app/          # Next.js App Router (ページ・API Routes)
+components/   # Reactコンポーネント (plan/, layout/, ui/)
+lib/          # ライブラリ (mastra/, supabase/, prisma.ts)
+hooks/        # カスタムフック
+prisma/       # データベーススキーマ
+```
+
+---
+
+## 開発
+
+```bash
+npm run dev      # 開発サーバー
+npm run build    # ビルド
+npm run lint     # ESLint
+npm run format   # Prettier
+```
+
+---
+
+**GitHub**: [@lamb48](https://github.com/lamb48)
