@@ -55,7 +55,7 @@ export function PlacesAutocomplete({
         if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
           console.log("Loading Google Maps script...");
           const script = document.createElement("script");
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ja&loading=async`;
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ja`;
           script.async = true;
           script.defer = true;
           document.head.appendChild(script);
@@ -63,7 +63,7 @@ export function PlacesAutocomplete({
           await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error("Google Maps script load timeout"));
-            }, 10000); // 10秒のタイムアウト
+            }, 15000); // 15秒のタイムアウトに延長
 
             script.onload = () => {
               clearTimeout(timeout);
@@ -75,38 +75,21 @@ export function PlacesAutocomplete({
               reject(new Error("Failed to load Google Maps script"));
             };
           });
-        } else if (!window.google?.maps) {
-          console.log("Waiting for Google Maps to initialize...");
-          // スクリプトは存在するが、まだロードされていない場合は待機
+        }
+
+        // Google Maps と Places ライブラリが確実にロードされるまで待機
+        if (!window.google?.maps?.places) {
+          console.log("Waiting for Google Maps and Places library to initialize...");
           await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error("Google Maps initialization timeout"));
-            }, 10000);
-
-            const checkInterval = setInterval(() => {
-              if (window.google?.maps) {
-                clearTimeout(timeout);
-                clearInterval(checkInterval);
-                console.log("Google Maps initialized");
-                resolve();
-              }
-            }, 100);
-          });
-        }
-
-        // Places ライブラリが確実にロードされるまで待機
-        if (!window.google?.maps?.places) {
-          console.log("Waiting for Places library to initialize...");
-          await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error("Places library initialization timeout"));
-            }, 10000);
+            }, 15000); // 15秒のタイムアウトに延長
 
             const checkInterval = setInterval(() => {
               if (window.google?.maps?.places) {
                 clearTimeout(timeout);
                 clearInterval(checkInterval);
-                console.log("Places library initialized");
+                console.log("Google Maps and Places library initialized");
                 resolve();
               }
             }, 100);
