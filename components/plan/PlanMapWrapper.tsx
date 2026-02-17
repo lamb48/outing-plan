@@ -9,9 +9,9 @@ const PlanMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <Card className="flex h-[500px] items-center justify-center bg-gray-50">
+      <Card className="flex h-[600px] items-center justify-center rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-gray-500" />
           <p className="text-sm text-gray-600">地図を読み込み中...</p>
         </div>
       </Card>

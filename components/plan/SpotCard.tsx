@@ -1,6 +1,8 @@
-import { MapPin, Clock, DollarSign, Star } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import { MapPin, Clock, Wallet, Star } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getPlacePhotoUrl } from "@/lib/google-places-photos";
 
 interface Spot {
   placeId: string;
@@ -16,6 +18,7 @@ interface Spot {
   order: number;
   arrivalTime: string;
   departureTime: string;
+  description?: string;
 }
 
 interface SpotCardProps {
@@ -33,49 +36,76 @@ export function SpotCard({ spot }: SpotCardProps) {
   });
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="secondary">{spot.order}</Badge>
-              <Badge variant="outline">{spot.category}</Badge>
+    <Card
+      id={`spot-${spot.placeId}`}
+      className="group gap-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-md"
+      style={{ scrollMarginTop: "80px" }}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2.5">
+          <Badge
+            variant="secondary"
+            className="min-w-8 justify-center rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-sm font-semibold text-gray-900"
+          >
+            {spot.order}
+          </Badge>
+          <div className="min-w-0 flex-1">
+            <h4 className="line-clamp-2 text-base font-semibold text-gray-900">{spot.name}</h4>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
+              {spot.rating && (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                  <span>{spot.rating.toFixed(1)}</span>
+                </span>
+              )}
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{spot.address}</span>
+              </span>
             </div>
-            <CardTitle className="text-xl">{spot.name}</CardTitle>
-            <CardDescription className="flex items-center gap-1 mt-1">
-              <MapPin className="h-3 w-3" />
-              {spot.address}
-            </CardDescription>
           </div>
-          {spot.rating && (
-            <div className="flex items-center gap-1 text-yellow-500">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="text-sm font-semibold">{spot.rating.toFixed(1)}</span>
-            </div>
-          )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">滞在時間</div>
-              <div className="font-medium">{spot.estimatedDuration}分</div>
-            </div>
+
+      <CardContent className="space-y-2">
+        {spot.description && (
+          <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">{spot.description}</p>
+        )}
+
+        {spot.photoReference && (
+          <div className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-100">
+            <Image
+              src={getPlacePhotoUrl(spot.photoReference, 600)}
+              alt={spot.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-gray-500" />
-            <div>
-              <div className="text-xs text-gray-500">予想費用</div>
-              <div className="font-medium">¥{spot.estimatedCost.toLocaleString()}</div>
+        )}
+
+        <div className="grid grid-cols-3 gap-2 pt-2">
+          <div className="rounded-lg bg-gray-50 p-2 text-center">
+            <div className="mb-0.5 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600">
+              <Wallet className="h-3.5 w-3.5 text-gray-500" />
+              予想費用
             </div>
+            <p className="text-sm font-semibold text-gray-900">
+              ¥{spot.estimatedCost.toLocaleString()}
+            </p>
           </div>
-          <div>
-            <div className="text-xs text-gray-500">訪問時間</div>
-            <div className="font-medium">
+          <div className="rounded-lg bg-gray-50 p-2 text-center">
+            <div className="mb-0.5 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600">
+              <Clock className="h-3.5 w-3.5 text-gray-500" />
+              滞在時間
+            </div>
+            <p className="text-sm font-semibold text-gray-900">{spot.estimatedDuration}分</p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-2 text-center">
+            <p className="mb-0.5 text-xs font-medium text-gray-600">訪問時間</p>
+            <p className="text-sm font-semibold text-gray-900">
               {arrivalTime} - {departureTime}
-            </div>
+            </p>
           </div>
         </div>
       </CardContent>
