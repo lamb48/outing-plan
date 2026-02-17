@@ -15,13 +15,13 @@
 
 ![プラン生成フォーム](./public/demo/form.png)
 
-### プラン詳細・地図表示
-
-![プラン詳細](./public/demo/plan-detail.png)
-
 ### プラン履歴
 
 ![プラン履歴](./public/demo/history.png)
+
+### プラン詳細・地図表示
+
+![プラン詳細](./public/demo/plan-detail.png)
 
 ---
 
