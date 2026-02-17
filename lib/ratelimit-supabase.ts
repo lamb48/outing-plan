@@ -22,8 +22,6 @@ export async function rateLimit(
   limit: number,
   windowMs: number,
 ): Promise<RateLimitResult> {
-  console.log("[RateLimit] Called with identifier:", identifier);
-
   const supabase = await createClient();
   const now = new Date();
   const resetTime = new Date(now.getTime() + windowMs);
@@ -35,14 +33,10 @@ export async function rateLimit(
     .eq("identifier", identifier)
     .single();
 
-  console.log("[RateLimit] Select result:", { existing, selectError });
-
   // エラーが発生した場合（レコードが存在しない場合も含む）
   if (selectError || !existing) {
-    console.log("[RateLimit] Creating new entry");
-
     // 新規エントリを作成
-    const { data: insertData, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from("rate_limits")
       .upsert({
         identifier,
@@ -51,8 +45,6 @@ export async function rateLimit(
       })
       .select()
       .single();
-
-    console.log("[RateLimit] Insert result:", { insertData, insertError });
 
     if (insertError) {
       console.error("Failed to create rate limit entry:", insertError);

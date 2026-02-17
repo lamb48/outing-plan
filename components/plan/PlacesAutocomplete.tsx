@@ -43,7 +43,6 @@ export function PlacesAutocomplete({
     const initAutocomplete = async () => {
       try {
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        console.log("API Key present:", !!apiKey);
 
         if (!apiKey) {
           setError("Google Maps APIキーが設定されていません");
@@ -53,7 +52,6 @@ export function PlacesAutocomplete({
 
         // Google Maps APIスクリプトを動的に読み込む
         if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-          console.log("Loading Google Maps script...");
           const script = document.createElement("script");
           script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ja`;
           script.async = true;
@@ -67,7 +65,6 @@ export function PlacesAutocomplete({
 
             script.onload = () => {
               clearTimeout(timeout);
-              console.log("Google Maps script loaded");
               resolve();
             };
             script.onerror = () => {
@@ -79,7 +76,6 @@ export function PlacesAutocomplete({
 
         // Google Maps と Places ライブラリが確実にロードされるまで待機
         if (!window.google?.maps?.places) {
-          console.log("Waiting for Google Maps and Places library to initialize...");
           await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error("Google Maps initialization timeout"));
@@ -89,7 +85,6 @@ export function PlacesAutocomplete({
               if (window.google?.maps?.places) {
                 clearTimeout(timeout);
                 clearInterval(checkInterval);
-                console.log("Google Maps and Places library initialized");
                 resolve();
               }
             }, 100);
@@ -97,12 +92,10 @@ export function PlacesAutocomplete({
         }
 
         if (!inputRef.current) {
-          console.log("Input ref not available");
           setIsLoading(false);
           return;
         }
 
-        console.log("Creating Autocomplete instance...");
         const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
           fields: ["geometry", "name", "formatted_address"],
           componentRestrictions: { country: "jp" }, // 日本に限定
@@ -130,7 +123,6 @@ export function PlacesAutocomplete({
           });
         });
 
-        console.log("Autocomplete initialized successfully");
         setIsLoading(false);
       } catch (err) {
         console.error("Error loading Google Maps:", err);
