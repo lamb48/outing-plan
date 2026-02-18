@@ -90,7 +90,7 @@ export function Header({ user }: HeaderProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="mt-1 w-56">
                   <div className="px-3 py-2">
-                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                    <p className="email-text text-sm font-medium text-gray-900">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">

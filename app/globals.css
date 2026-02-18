@@ -124,6 +124,13 @@
     @apply bg-background text-foreground;
   }
 
+  /* iOS Safariのメール自動リンク化による下線を抑止 */
+  .email-text a,
+  .email-text [x-apple-data-detectors] {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
   /* Google Places Autocomplete のカスタムスタイル */
   .pac-container {
     border-radius: 0.75rem !important;
