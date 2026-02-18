@@ -76,7 +76,7 @@ export async function generateOutingPlan(
     });
 
     // --- Phase 1: 並列データ収集 ---
-    onProgress?.({ status: "collecting", message: "スポットを検索中...（天気情報も取得中）" });
+    onProgress?.({ status: "collecting", message: "スポットを検索中..." });
 
     const collected = await collectAllData({
       latitude: params.latitude,
@@ -124,7 +124,7 @@ export async function generateOutingPlan(
     }
 
     // --- Phase 2b: タイミング + コスト（並列） ---
-    onProgress?.({ status: "timing", message: "ルートと時間・費用を並列で計算中..." });
+    onProgress?.({ status: "timing", message: "ルートと時間・費用を計算中..." });
 
     const timingPrompt = createTimingPrompt({
       selectedAliases: validAliases,
