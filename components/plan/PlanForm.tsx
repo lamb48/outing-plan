@@ -24,9 +24,24 @@ const planFormSchema = z.object({
 
 type PlanFormData = z.infer<typeof planFormSchema>;
 
+interface SSEEvent {
+  status: "collecting" | "selecting" | "timing" | "assembling" | "done" | "error";
+  message?: string;
+  plan?: { id: string };
+  retryAfterSeconds?: number;
+}
+
+const STATUS_MESSAGES: Record<string, string> = {
+  collecting: "スポットを検索中...",
+  selecting: "最適なスポットを選定中...",
+  timing: "ルートと時間・費用を計算中...",
+  assembling: "プランを整理中...",
+};
+
 export function PlanForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [progressMessage, setProgressMessage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
@@ -73,28 +88,68 @@ export function PlanForm() {
   const onSubmit = async (data: PlanFormData) => {
     setIsLoading(true);
     setError(null);
+    setProgressMessage(STATUS_MESSAGES.collecting);
 
     try {
       const response = await fetch("/api/plan/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "プラン生成に失敗しました");
+      if (!response.ok || !response.body) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error((result as { message?: string }).message || "プラン生成に失敗しました");
       }
 
-      router.push(`/plan/${result.plan.id}`);
-    } catch (error) {
-      console.error("Error generating plan:", error);
-      setError(error instanceof Error ? error.message : "エラーが発生しました");
+      // SSE ストリームを読み込む
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // "data: {...}\n\n" 形式のイベントを処理
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice("data: ".length).trim();
+          if (!jsonStr) continue;
+
+          let event: SSEEvent;
+          try {
+            event = JSON.parse(jsonStr) as SSEEvent;
+          } catch {
+            continue;
+          }
+
+          if (event.status === "error") {
+            throw new Error(event.message || "プラン生成に失敗しました");
+          }
+
+          if (event.status === "done") {
+            if (event.plan?.id) {
+              router.push(`/plan/${event.plan.id}`);
+            }
+            return;
+          }
+
+          const msg = event.message || STATUS_MESSAGES[event.status] || "";
+          if (msg) setProgressMessage(msg);
+        }
+      }
+    } catch (err) {
+      console.error("Error generating plan:", err);
+      setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
       setIsLoading(false);
+      setProgressMessage("");
     }
   };
 
@@ -126,7 +181,7 @@ export function PlanForm() {
               {isLoading ? (
                 <span className="flex items-center gap-1.5">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  生成中...
+                  {progressMessage || "生成中..."}
                 </span>
               ) : (
                 "プラン作成"

@@ -1,27 +1,62 @@
-import { outingPlanAgent, planStructuringAgent } from "./agent-instances";
-import { type GeneratePlanParams, type GeneratedPlan, generatedPlanSchema } from "./schemas";
-import { extractDraftText } from "./response-extractor";
-import { createStructuringPrompt } from "./structuring-prompt";
-import { createUserPrompt } from "./prompts";
+/**
+ * おでかけプラン生成オーケストレーター
+ *
+ * フェーズ構成:
+ * 0. 開始時刻決定（コード）
+ * 1. 並列データ収集（Google Places × N カテゴリ + Open-Meteo 天気）
+ * 2a. スポット選定エージェント（LLM・ツールなし・alias のみ）
+ * 2b. タイミング + コスト エージェント（並列実行）
+ * 3. コード組み立て + Zod 検証
+ */
+
+import { type GeneratePlanParams, type GeneratedPlan } from "./schemas";
+import { collectAllData } from "./data-collectors/index";
+import { formatAliasListForLLM } from "./data-collectors/places-collector";
+import { spotSelectionAgent } from "./agents/spot-selection-agent";
+import { timingAgent } from "./agents/timing-agent";
+import { costAgent } from "./agents/cost-agent";
+import { createSpotSelectionPrompt } from "./prompts/spot-selection-prompt";
+import { createTimingPrompt } from "./prompts/timing-prompt";
+import { createCostPrompt } from "./prompts/cost-prompt";
+import {
+  assemblePlan,
+  parseSelectionResponse,
+  parseTimingResponse,
+  parseCostResponse,
+} from "./plan-assembler";
+import { determineStartTime } from "./start-time";
 import { createTrace } from "../langfuse";
 
-// 後方互換性のため型を re-export
 export type { GeneratePlanParams, GeneratedPlan };
+
+export type PlanProgressStatus =
+  | "collecting"
+  | "selecting"
+  | "timing"
+  | "assembling"
+  | "done"
+  | "error";
+
+export interface PlanProgress {
+  status: PlanProgressStatus;
+  message: string;
+}
+
+export type ProgressCallback = (progress: PlanProgress) => void;
 
 /**
  * おでかけプランを生成（Langfuseトレーシング付き）
  */
-export async function generateOutingPlan(params: GeneratePlanParams): Promise<GeneratedPlan> {
+export async function generateOutingPlan(
+  params: GeneratePlanParams,
+  onProgress?: ProgressCallback,
+): Promise<GeneratedPlan> {
   const startTime = Date.now();
-  const userPrompt = createUserPrompt(params);
 
   const trace = createTrace({
     name: "generate-outing-plan",
     userId: params.userId,
-    input: {
-      params,
-      userPrompt,
-    },
+    input: { params },
     metadata: {
       latitude: params.latitude,
       longitude: params.longitude,
@@ -33,45 +68,108 @@ export async function generateOutingPlan(params: GeneratePlanParams): Promise<Ge
   });
 
   try {
-    // 1段階目: ツールを使って下書きを生成
-    const draftResponse = await outingPlanAgent.generate(userPrompt, {
-      maxSteps: 6,
+    // --- Phase 0: 開始時刻決定 ---
+    const planStartTime = determineStartTime({
+      locationName: params.locationName,
+      categories: params.categories,
+      startTime: params.startTime,
     });
 
-    const draftText = extractDraftText(draftResponse);
-    if (!draftText) {
-      throw new Error("Failed to extract draft text from tool execution result");
-    }
+    // --- Phase 1: 並列データ収集 ---
+    onProgress?.({ status: "collecting", message: "スポットを検索中...（天気情報も取得中）" });
 
-    // 2段階目: ツール無しで構造化
-    const structuringPrompt = createStructuringPrompt(userPrompt, draftText);
-    const structuredResponse = await planStructuringAgent.generate<GeneratedPlan>(
-      structuringPrompt,
-      {
-        maxSteps: 1,
-        structuredOutput: {
-          schema: generatedPlanSchema,
-          errorStrategy: "strict",
-          jsonPromptInjection: true,
-        },
-      },
+    const collected = await collectAllData({
+      latitude: params.latitude,
+      longitude: params.longitude,
+      locationName: params.locationName,
+      categories: params.categories,
+    });
+
+    const totalCandidates = Object.values(collected.placesByCategory).reduce(
+      (sum, places) => sum + places.length,
+      0,
     );
 
-    if (!structuredResponse.object) {
-      throw new Error("Structured output is missing from second-stage response");
+    if (totalCandidates === 0) {
+      throw new Error("指定エリアでスポットが見つかりませんでした。エリアを変更してください。");
     }
 
-    const plan = generatedPlanSchema.parse(structuredResponse.object);
+    // --- Phase 2a: スポット選定 ---
+    onProgress?.({ status: "selecting", message: "最適なスポットを選定中..." });
+
+    const aliasListText = formatAliasListForLLM(collected.aliasRegistry);
+    const selectionPrompt = createSpotSelectionPrompt({
+      aliasListText,
+      budget: params.budget,
+      durationHours: params.durationHours,
+      categories: params.categories,
+      startTime: planStartTime,
+      weather: collected.weather,
+    });
+
+    const selectionResponse = await spotSelectionAgent.generate(selectionPrompt, {
+      maxSteps: 1,
+    });
+
+    const { title, selectedAliases } = parseSelectionResponse(selectionResponse.text ?? "");
+
+    if (selectedAliases.length === 0) {
+      throw new Error("スポット選定に失敗しました。もう一度お試しください。");
+    }
+
+    // 選定された alias が registry に存在するか確認
+    const validAliases = selectedAliases.filter((alias) => collected.aliasRegistry[alias]);
+    if (validAliases.length === 0) {
+      throw new Error("選定されたスポットが候補リストに存在しません。もう一度お試しください。");
+    }
+
+    // --- Phase 2b: タイミング + コスト（並列） ---
+    onProgress?.({ status: "timing", message: "ルートと時間・費用を並列で計算中..." });
+
+    const timingPrompt = createTimingPrompt({
+      selectedAliases: validAliases,
+      registry: collected.aliasRegistry,
+      startTime: planStartTime,
+      durationHours: params.durationHours,
+    });
+
+    const costPrompt = createCostPrompt({
+      selectedAliases: validAliases,
+      registry: collected.aliasRegistry,
+      budget: params.budget,
+    });
+
+    const [timingResponse, costResponse] = await Promise.all([
+      timingAgent.generate(timingPrompt, { maxSteps: 4 }),
+      costAgent.generate(costPrompt, { maxSteps: 1 }),
+    ]);
+
+    const timing = parseTimingResponse(timingResponse.text ?? "");
+    const cost = parseCostResponse(costResponse.text ?? "");
+
+    // --- Phase 3: コード組み立て + Zod 検証 ---
+    onProgress?.({ status: "assembling", message: "プランを整理中..." });
+
+    const plan = assemblePlan({
+      title,
+      selectedAliases: validAliases,
+      registry: collected.aliasRegistry,
+      timing,
+      cost,
+    });
 
     if (trace) {
       trace.update({
         output: plan,
         metadata: {
           duration: Date.now() - startTime,
+          dataCollectionMs: collected.collectionDurationMs,
+          hasWeather: !!collected.weather,
+          categoriesCount: params.categories.length,
+          totalCandidates,
+          selectedCount: validAliases.length,
           spotsCount: plan.spots.length,
           totalCost: plan.totalCost,
-          twoPhase: true,
-          draftTextLength: draftText.length,
         },
       });
     }
@@ -89,7 +187,6 @@ export async function generateOutingPlan(params: GeneratePlanParams): Promise<Ge
 
     console.error("[ERROR] Error generating plan:", error);
 
-    // Zodエラーの場合はシンプルなメッセージのみ投げる
     if (error && typeof error === "object" && "errors" in error) {
       throw new Error("プラン生成に失敗しました。もう一度お試しください。");
     }

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { generateOutingPlan } from "@/lib/mastra/agent";
+import { generateOutingPlan, type PlanProgress } from "@/lib/mastra/agent";
 import { flushLangfuse } from "@/lib/langfuse";
 import { mapCategoryToPlacesType } from "@/lib/categories";
 import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit-supabase";
@@ -27,142 +27,176 @@ function parseRetryAfterSeconds(message: string): number | null {
 }
 
 /**
+ * SSE イベントをエンコードするヘルパー
+ */
+function encodeSSE(data: unknown): Uint8Array {
+  const json = JSON.stringify(data);
+  return new TextEncoder().encode(`data: ${json}\n\n`);
+}
+
+/**
  * POST /api/plan/generate
- * AIプラン生成API
+ * AIプラン生成API（SSEストリーミング対応）
  */
 export async function POST(request: NextRequest) {
-  try {
-    // 認証チェック
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  // 認証チェック
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // レート制限チェック
-    const clientIp = getClientIp(request);
-    const rateLimitResult = await rateLimit(
-      `plan-generate:${clientIp}`,
-      RATE_LIMITS.PLAN_GENERATE.limit,
-      RATE_LIMITS.PLAN_GENERATE.windowMs,
-    );
-
-    if (!rateLimitResult.success) {
-      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
-      return NextResponse.json(
-        {
-          error: "Too many requests",
-          message: "リクエストが多すぎます。しばらく待ってから再試行してください。",
-          retryAfter,
-        },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": String(retryAfter),
-            "X-RateLimit-Limit": String(rateLimitResult.limit),
-            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
-            "X-RateLimit-Reset": String(Math.ceil(rateLimitResult.reset / 1000)),
-          },
-        },
-      );
-    }
-
-    // リクエストボディのパース
-    const body = await request.json();
-
-    // バリデーション
-    const validationResult = generatePlanSchema.safeParse(body);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid request body",
-          details: validationResult.error.errors,
-        },
-        { status: 400 },
-      );
-    }
-
-    const params = validationResult.data;
-
-    // カテゴリをGoogle Places APIのタイプに変換
-    const placesTypes = params.categories.map((cat) => mapCategoryToPlacesType(cat));
-
-    // AIプラン生成
-    const plan = await generateOutingPlan({
-      ...params,
-      categories: placesTypes,
-      userId: user.id,
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
     });
+  }
 
-    const { data: savedPlan, error: insertPlanError } = await supabase
-      .from("plans")
-      .insert({
-        user_id: user.id,
-        title: plan.title,
-        budget: params.budget,
-        categories: params.categories,
-        duration_hours: params.durationHours,
-        area_lat: params.latitude,
-        area_lng: params.longitude,
-        spots: plan.spots,
-      })
-      .select()
-      .single();
+  // レート制限チェック
+  const clientIp = getClientIp(request);
+  const rateLimitResult = await rateLimit(
+    `plan-generate:${clientIp}`,
+    RATE_LIMITS.PLAN_GENERATE.limit,
+    RATE_LIMITS.PLAN_GENERATE.windowMs,
+  );
 
-    if (insertPlanError || !savedPlan) {
-      throw new Error(`プランの保存に失敗しました: ${insertPlanError?.message}`);
-    }
-
-    // Langfuseバッファをフラッシュ
-    await flushLangfuse();
-
-    return NextResponse.json({
-      success: true,
-      plan: {
-        id: savedPlan.id,
-        title: savedPlan.title,
-        budget: savedPlan.budget,
-        categories: savedPlan.categories,
-        durationHours: savedPlan.duration_hours,
-        totalCost: plan.totalCost,
-        totalDuration: plan.totalDuration,
-        spots: plan.spots,
-        createdAt: savedPlan.created_at,
-      },
-    });
-  } catch (error) {
-    console.error("Error generating plan:", error);
-
-    await flushLangfuse();
-
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const isQuotaExceeded = /quota exceeded|rate limit|free_tier_requests/i.test(message);
-    const retryAfterSeconds = parseRetryAfterSeconds(message);
-
-    if (isQuotaExceeded) {
-      return NextResponse.json(
-        {
-          error: "Rate limit exceeded",
-          message: "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
-          retryAfterSeconds,
-        },
-        {
-          status: 429,
-          headers: retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
-        },
-      );
-    }
-
-    return NextResponse.json(
+  if (!rateLimitResult.success) {
+    const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+    return new Response(
+      JSON.stringify({
+        error: "Too many requests",
+        message: "リクエストが多すぎます。しばらく待ってから再試行してください。",
+        retryAfter,
+      }),
       {
-        error: "Failed to generate plan",
-        message: "プランの生成に失敗しました",
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Limit": String(rateLimitResult.limit),
+          "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+          "X-RateLimit-Reset": String(Math.ceil(rateLimitResult.reset / 1000)),
+        },
       },
-      { status: 500 },
     );
   }
+
+  // リクエストボディのパース + バリデーション
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const validationResult = generatePlanSchema.safeParse(body);
+  if (!validationResult.success) {
+    return new Response(
+      JSON.stringify({ error: "Invalid request body", details: validationResult.error.errors }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const params = validationResult.data;
+  const placesTypes = params.categories.map((cat) => mapCategoryToPlacesType(cat));
+
+  // SSE ストリームを生成
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: unknown) => {
+        try {
+          controller.enqueue(encodeSSE(data));
+        } catch {
+          // クライアントが切断済みの場合は無視
+        }
+      };
+
+      const onProgress = (progress: PlanProgress) => {
+        send({ status: progress.status, message: progress.message });
+      };
+
+      try {
+        const plan = await generateOutingPlan(
+          {
+            ...params,
+            categories: placesTypes,
+            userId: user.id,
+          },
+          onProgress,
+        );
+
+        // Supabase に保存
+        const { data: savedPlan, error: insertPlanError } = await supabase
+          .from("plans")
+          .insert({
+            user_id: user.id,
+            title: plan.title,
+            budget: params.budget,
+            categories: params.categories,
+            duration_hours: params.durationHours,
+            area_lat: params.latitude,
+            area_lng: params.longitude,
+            spots: plan.spots,
+          })
+          .select()
+          .single();
+
+        if (insertPlanError || !savedPlan) {
+          throw new Error(`プランの保存に失敗しました: ${insertPlanError?.message}`);
+        }
+
+        send({
+          status: "done",
+          plan: {
+            id: savedPlan.id,
+            title: savedPlan.title,
+            budget: savedPlan.budget,
+            categories: savedPlan.categories,
+            durationHours: savedPlan.duration_hours,
+            totalCost: plan.totalCost,
+            totalDuration: plan.totalDuration,
+            spots: plan.spots,
+            createdAt: savedPlan.created_at,
+          },
+        });
+      } catch (error) {
+        console.error("Error generating plan:", error);
+
+        const message = error instanceof Error ? error.message : "Unknown error";
+        const isQuotaExceeded = /quota exceeded|rate limit|free_tier_requests/i.test(message);
+        const retryAfterSeconds = parseRetryAfterSeconds(message);
+
+        if (isQuotaExceeded) {
+          send({
+            status: "error",
+            error: "Rate limit exceeded",
+            message: "Gemini APIの利用上限に達しました。しばらく待ってから再試行してください。",
+            retryAfterSeconds,
+          });
+        } else {
+          send({
+            status: "error",
+            error: "Failed to generate plan",
+            message: message || "プランの生成に失敗しました",
+          });
+        }
+      } finally {
+        await flushLangfuse();
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
