@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   },
   description:
     "予算や時間に合わせた最適なおでかけプランを自動生成。観光スポットやグルメ、アクティビティまで、あなただけのプランを作成できます。",
+  other: {
+    "format-detection": "telephone=no, email=no, address=no",
+  },
 };
 
 export default function RootLayout({
