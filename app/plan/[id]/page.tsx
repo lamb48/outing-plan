@@ -6,7 +6,7 @@ import { SpotCard } from "@/components/plan/SpotCard";
 import { PlanMapWrapper } from "@/components/plan/PlanMapWrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Wallet, Star, AlertCircle } from "lucide-react";
+import { MapPin, Clock, Wallet, Star, AlertCircle, ExternalLink } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -112,6 +112,18 @@ export default async function PlanPage({ params }: PageProps) {
       : undefined;
   const totalDurationHours = Math.round((totalDuration / 60) * 10) / 10;
 
+  // Google Maps URL（全スポットのルート）
+  const sortedSpots = [...plan.spots].sort(
+    (a: SpotWithRoute, b: SpotWithRoute) => a.order - b.order,
+  );
+  const gmOrigin = `${sortedSpots[0].lat},${sortedSpots[0].lng}`;
+  const gmDestination = `${sortedSpots[sortedSpots.length - 1].lat},${sortedSpots[sortedSpots.length - 1].lng}`;
+  const gmWaypoints = sortedSpots
+    .slice(1, -1)
+    .map((s: SpotWithRoute) => `${s.lat},${s.lng}`)
+    .join("|");
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${gmOrigin}&destination=${gmDestination}${gmWaypoints ? `&waypoints=${encodeURIComponent(gmWaypoints)}` : ""}&travelmode=walking`;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header user={user} />
@@ -197,10 +209,19 @@ export default async function PlanPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            <div className="xl:sticky xl:top-24">
+            <div className="space-y-3 xl:sticky xl:top-24">
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                 <PlanMapWrapper spots={plan.spots} className="h-[540px] lg:h-[600px]" />
               </div>
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 active:bg-gray-100 xl:hidden"
+              >
+                <ExternalLink className="h-4 w-4 text-gray-500" />
+                Google マップで開く
+              </a>
             </div>
           </section>
 
