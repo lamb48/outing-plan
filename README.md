@@ -13,15 +13,15 @@
 
 ### プラン生成フォーム
 
-![プラン生成フォーム](./public/demo/form.png)
+<img src="./public/demo/form.png" alt="プラン生成フォーム" width="700" />
 
 ### プラン履歴
 
-![プラン履歴](./public/demo/history.png)
+<img src="./public/demo/history.png" alt="プラン履歴" width="700" />
 
 ### プラン詳細・地図表示
 
-![プラン詳細](./public/demo/plan-detail.png)
+<img src="./public/demo/plan-detail.png" alt="プラン詳細" width="700" />
 
 ---
 
