@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
             ...params,
             categories: placesTypes,
             userId: user.id,
+            sessionId: user.id,
           },
           onProgress,
         );

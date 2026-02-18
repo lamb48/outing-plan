@@ -56,6 +56,7 @@ export async function generateOutingPlan(
   const trace = createTrace({
     name: "generate-outing-plan",
     userId: params.userId,
+    sessionId: params.sessionId,
     input: { params },
     metadata: {
       latitude: params.latitude,

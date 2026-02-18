@@ -12,6 +12,7 @@ export interface GeneratePlanParams {
   durationHours: number;
   startTime?: string;
   userId?: string;
+  sessionId?: string;
 }
 
 /**
