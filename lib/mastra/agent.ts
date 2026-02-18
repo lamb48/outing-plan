@@ -105,6 +105,7 @@ export async function generateOutingPlan(
       categories: params.categories,
       startTime: planStartTime,
       weather: collected.weather,
+      trends: collected.trends,
     });
 
     const selectionResponse = await spotSelectionAgent.generate(selectionPrompt, {

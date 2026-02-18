@@ -5,7 +5,7 @@
  * - 時間帯・天気・カテゴリバランスを考慮した選定を行う
  */
 
-import { type WeatherData } from "../data-collectors/index";
+import { type WeatherData, type TrendData } from "../data-collectors/index";
 
 export const SPOT_SELECTION_SYSTEM_PROMPT = `あなたはおでかけプランのスポット選定専門AIです。
 候補スポットリストから最適なスポットを選び、訪問順序を決定してください。
@@ -44,8 +44,9 @@ export function createSpotSelectionPrompt(params: {
   categories: string[];
   startTime: string;
   weather: WeatherData | null;
+  trends: TrendData | null;
 }): string {
-  const { aliasListText, budget, durationHours, categories, startTime, weather } = params;
+  const { aliasListText, budget, durationHours, categories, startTime, weather, trends } = params;
 
   const startDate = new Date(startTime);
   const startHour = startDate.getHours();
@@ -70,6 +71,11 @@ export function createSpotSelectionPrompt(params: {
 - 屋外適否: ${weather.isOutdoorFriendly ? "○ 屋外活動に適しています" : "× 天気が悪いため屋内スポットを優先してください"}`
     : "";
 
+  const trendsSection = trends
+    ? `## エリアのトレンド情報（${trends.query}）
+${trends.summary.slice(0, 400)}`
+    : "";
+
   const { minSpots, maxSpots } = calcSpotRange(durationHours);
   const spotsGuide = minSpots === maxSpots ? `${minSpots}件` : `${minSpots}〜${maxSpots}件`;
 
@@ -85,6 +91,8 @@ ${aliasListText}
 - 指定カテゴリ: ${categories.join(", ")}（各カテゴリから1件以上選ぶこと）
 
 ${weatherSection}
+
+${trendsSection}
 
 ## 件数の目安
 ${durationHours}時間のプランなので **${spotsGuide}** が適切です。

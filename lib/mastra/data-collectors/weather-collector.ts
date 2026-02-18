@@ -74,7 +74,9 @@ export async function fetchWeather(
       timezone: "Asia/Tokyo",
     });
 
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, {
+      signal: AbortSignal.timeout(5000),
+    });
 
     if (!response.ok) {
       console.warn(`[weather-collector] Open-Meteo API returned ${response.status}`);
