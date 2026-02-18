@@ -69,3 +69,24 @@ export async function shutdownLangfuse() {
 
   await langfuse.shutdownAsync();
 }
+
+/**
+ * トレースにプログラムスコアを追加する
+ * プラン組み立て後に呼び出し、品質指標を記録する
+ */
+export function addTraceScore(params: {
+  traceId: string;
+  name: string;
+  value: number;
+  comment?: string;
+}): void {
+  const langfuse = getLangfuseClient();
+  if (!langfuse) return;
+
+  langfuse.score({
+    traceId: params.traceId,
+    name: params.name,
+    value: params.value,
+    comment: params.comment,
+  });
+}

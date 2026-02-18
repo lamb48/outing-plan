@@ -25,7 +25,7 @@ import {
   parseCostResponse,
 } from "./plan-assembler";
 import { determineStartTime } from "./start-time";
-import { createTrace } from "../langfuse";
+import { createTrace, addTraceScore } from "../langfuse";
 
 export type { GeneratePlanParams, GeneratedPlan };
 
@@ -69,21 +69,55 @@ export async function generateOutingPlan(
 
   try {
     // --- Phase 0: 開始時刻決定 ---
+    const phase0Span = trace?.span({
+      name: "phase-0-start-time",
+      input: { locationName: params.locationName, categories: params.categories },
+    });
+
     const planStartTime = determineStartTime({
       locationName: params.locationName,
       categories: params.categories,
       startTime: params.startTime,
     });
 
+    phase0Span?.end({ output: { planStartTime } });
+
     // --- Phase 1: 並列データ収集 ---
     onProgress?.({ status: "collecting", message: "スポットを検索中..." });
 
-    const collected = await collectAllData({
-      latitude: params.latitude,
-      longitude: params.longitude,
-      locationName: params.locationName,
-      categories: params.categories,
+    const phase1Span = trace?.span({
+      name: "phase-1-data-collection",
+      input: {
+        latitude: params.latitude,
+        longitude: params.longitude,
+        locationName: params.locationName,
+        categories: params.categories,
+      },
     });
+
+    let collected: Awaited<ReturnType<typeof collectAllData>> | undefined;
+    try {
+      collected = await collectAllData({
+        latitude: params.latitude,
+        longitude: params.longitude,
+        locationName: params.locationName,
+        categories: params.categories,
+      });
+    } finally {
+      phase1Span?.end({
+        output: collected
+          ? {
+              totalCandidates: Object.values(collected.placesByCategory).reduce(
+                (sum, places) => sum + places.length,
+                0,
+              ),
+              hasWeather: !!collected.weather,
+              hasTrends: !!collected.trends,
+              collectionDurationMs: collected.collectionDurationMs,
+            }
+          : undefined,
+      });
+    }
 
     const totalCandidates = Object.values(collected.placesByCategory).reduce(
       (sum, places) => sum + places.length,
@@ -108,9 +142,24 @@ export async function generateOutingPlan(
       trends: collected.trends,
     });
 
-    const selectionResponse = await spotSelectionAgent.generate(selectionPrompt, {
-      maxSteps: 1,
+    const selectionGen = trace?.generation({
+      name: "phase-2a-spot-selection",
+      model: "google/gemini-2.5-flash-lite",
+      input: selectionPrompt,
     });
+
+    let selectionResponse: Awaited<ReturnType<typeof spotSelectionAgent.generate>> | undefined;
+    try {
+      selectionResponse = await spotSelectionAgent.generate(selectionPrompt, { maxSteps: 1 });
+    } finally {
+      selectionGen?.end({
+        output: selectionResponse?.text ?? "",
+        usage: {
+          input: selectionResponse?.usage?.inputTokens ?? undefined,
+          output: selectionResponse?.usage?.outputTokens ?? undefined,
+        },
+      });
+    }
 
     const { title, selectedAliases } = parseSelectionResponse(selectionResponse.text ?? "");
 
@@ -140,10 +189,43 @@ export async function generateOutingPlan(
       budget: params.budget,
     });
 
-    const [timingResponse, costResponse] = await Promise.all([
-      timingAgent.generate(timingPrompt, { maxSteps: 4 }),
-      costAgent.generate(costPrompt, { maxSteps: 1 }),
-    ]);
+    // 並列実行なので Promise.all の前に両方の generation を開始する
+    const timingGen = trace?.generation({
+      name: "phase-2b-timing",
+      model: "google/gemini-2.5-flash-lite",
+      input: timingPrompt,
+      metadata: { maxSteps: 4 },
+    });
+    const costGen = trace?.generation({
+      name: "phase-2b-cost",
+      model: "google/gemini-2.5-flash-lite",
+      input: costPrompt,
+    });
+
+    let timingResponse: Awaited<ReturnType<typeof timingAgent.generate>> | undefined;
+    let costResponse: Awaited<ReturnType<typeof costAgent.generate>> | undefined;
+    try {
+      [timingResponse, costResponse] = await Promise.all([
+        timingAgent.generate(timingPrompt, { maxSteps: 4 }),
+        costAgent.generate(costPrompt, { maxSteps: 1 }),
+      ]);
+    } finally {
+      // timingAgent は maxSteps:4 なので複数ステップ累計の totalUsage を使う
+      timingGen?.end({
+        output: timingResponse?.text ?? "",
+        usage: {
+          input: timingResponse?.totalUsage?.inputTokens ?? undefined,
+          output: timingResponse?.totalUsage?.outputTokens ?? undefined,
+        },
+      });
+      costGen?.end({
+        output: costResponse?.text ?? "",
+        usage: {
+          input: costResponse?.usage?.inputTokens ?? undefined,
+          output: costResponse?.usage?.outputTokens ?? undefined,
+        },
+      });
+    }
 
     const timing = parseTimingResponse(timingResponse.text ?? "");
     const cost = parseCostResponse(costResponse.text ?? "");
@@ -151,13 +233,22 @@ export async function generateOutingPlan(
     // --- Phase 3: コード組み立て + Zod 検証 ---
     onProgress?.({ status: "assembling", message: "プランを整理中..." });
 
-    const plan = assemblePlan({
-      title,
-      selectedAliases: validAliases,
-      registry: collected.aliasRegistry,
-      timing,
-      cost,
-    });
+    const phase3Span = trace?.span({ name: "phase-3-assembly" });
+
+    let plan: Awaited<ReturnType<typeof assemblePlan>> | undefined;
+    try {
+      plan = assemblePlan({
+        title,
+        selectedAliases: validAliases,
+        registry: collected.aliasRegistry,
+        timing,
+        cost,
+      });
+    } finally {
+      phase3Span?.end({
+        output: plan ? { spotsCount: plan.spots.length, totalCost: plan.totalCost } : undefined,
+      });
+    }
 
     if (trace) {
       trace.update({
@@ -173,6 +264,31 @@ export async function generateOutingPlan(
           totalCost: plan.totalCost,
         },
       });
+
+      // 予算遵守率 (1.0 = ピッタリ, <1.0 = 予算内, >1.0 = 超過)
+      if (params.budget > 0) {
+        addTraceScore({
+          traceId: trace.id,
+          name: "budget-compliance",
+          value: plan.totalCost / params.budget,
+          comment: `totalCost=${plan.totalCost} / budget=${params.budget}`,
+        });
+      }
+      // スポット密度 (スポット数 / 時間数)
+      if (params.durationHours > 0) {
+        addTraceScore({
+          traceId: trace.id,
+          name: "spots-per-hour",
+          value: plan.spots.length / params.durationHours,
+          comment: `${plan.spots.length} spots / ${params.durationHours} hours`,
+        });
+      }
+      addTraceScore({
+        traceId: trace.id,
+        name: "has-weather-data",
+        value: collected.weather ? 1 : 0,
+      });
+      addTraceScore({ traceId: trace.id, name: "has-trend-data", value: collected.trends ? 1 : 0 });
     }
 
     return plan;
