@@ -121,18 +121,29 @@ export function parseCostResponse(text: string): Record<string, CostResult> {
  * スポット選定エージェントのJSON出力をパース
  */
 export function parseSelectionResponse(text: string): {
-  title: string;
   selectedAliases: string[];
 } {
   const json = extractJson(text);
   const parsed = JSON.parse(json);
 
-  const title = typeof parsed.title === "string" ? parsed.title : "おでかけプラン";
   const selectedAliases = Array.isArray(parsed.selectedAliases)
     ? parsed.selectedAliases.filter((a: unknown) => typeof a === "string")
     : [];
 
-  return { title, selectedAliases };
+  return { selectedAliases };
+}
+
+/**
+ * タイトル生成エージェントのJSON出力をパース
+ */
+export function parseTitleResponse(text: string): string {
+  try {
+    const json = extractJson(text);
+    const parsed = JSON.parse(json);
+    return typeof parsed.title === "string" ? parsed.title : "おでかけプラン";
+  } catch {
+    return "おでかけプラン";
+  }
 }
 
 /** テキストから JSON ブロックを抽出（コードフェンス対応） */

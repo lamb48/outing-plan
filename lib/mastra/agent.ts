@@ -18,11 +18,13 @@ import { costAgent } from "./agents/cost-agent";
 import { createSpotSelectionPrompt } from "./prompts/spot-selection-prompt";
 import { createTimingPrompt } from "./prompts/timing-prompt";
 import { createCostPrompt } from "./prompts/cost-prompt";
+import { createTitlePrompt } from "./prompts/title-prompt";
 import {
   assemblePlan,
   parseSelectionResponse,
   parseTimingResponse,
   parseCostResponse,
+  parseTitleResponse,
 } from "./plan-assembler";
 import { determineStartTime } from "./start-time";
 import { createTrace, addTraceScore } from "../langfuse";
@@ -162,7 +164,7 @@ export async function generateOutingPlan(
       });
     }
 
-    const { title, selectedAliases } = parseSelectionResponse(selectionResponse.text ?? "");
+    const { selectedAliases } = parseSelectionResponse(selectionResponse.text ?? "");
 
     if (selectedAliases.length === 0) {
       throw new Error("スポット選定に失敗しました。もう一度お試しください。");
@@ -230,6 +232,44 @@ export async function generateOutingPlan(
 
     const timing = parseTimingResponse(timingResponse.text ?? "");
     const cost = parseCostResponse(costResponse.text ?? "");
+
+    // --- Phase 2c: タイトル生成（実スケジュールを元に）---
+    const schedule = validAliases.map((alias) => {
+      const spot = collected.aliasRegistry[alias];
+      const t = timing[alias];
+      const arrivalHour = t
+        ? new Date(t.arrivalTime).getHours()
+        : new Date(planStartTime).getHours();
+      return { name: spot.name, arrivalHour };
+    });
+
+    const titlePrompt = createTitlePrompt({
+      schedule,
+      categories: params.categories,
+      weather: collected.weather,
+      trends: collected.trends,
+    });
+
+    const titleGen = trace?.generation({
+      name: "phase-2c-title",
+      model: "google/gemini-2.5-flash-lite",
+      input: titlePrompt,
+    });
+
+    let titleResponse: Awaited<ReturnType<typeof spotSelectionAgent.generate>> | undefined;
+    try {
+      titleResponse = await spotSelectionAgent.generate(titlePrompt, { maxSteps: 1 });
+    } finally {
+      titleGen?.end({
+        output: titleResponse?.text ?? "",
+        usage: {
+          input: titleResponse?.usage?.inputTokens ?? undefined,
+          output: titleResponse?.usage?.outputTokens ?? undefined,
+        },
+      });
+    }
+
+    const title = parseTitleResponse(titleResponse?.text ?? "");
 
     // --- Phase 3: コード組み立て + Zod 検証 ---
     onProgress?.({ status: "assembling", message: "プランを整理中..." });

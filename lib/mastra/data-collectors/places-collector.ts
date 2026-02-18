@@ -63,7 +63,7 @@ export async function searchNearbyPlaces(params: {
   radius?: number;
   maxResults?: number;
 }): Promise<PlaceResult[]> {
-  const { latitude, longitude, category, radius = 2000, maxResults = 10 } = params;
+  const { latitude, longitude, category, radius = 2000, maxResults = 20 } = params;
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
@@ -138,7 +138,15 @@ export function buildAliasRegistry(placesByCategory: Record<string, PlaceResult[
 
   for (const [category, places] of Object.entries(placesByCategory)) {
     const prefix = getCategoryPrefix(category);
-    places.forEach((place, index) => {
+
+    // カテゴリ別に独立してシャッフル（元の配列は変更しない）
+    const shuffled = [...places];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    shuffled.forEach((place, index) => {
       const alias = `${prefix}${index + 1}`;
       registry[alias] = place;
     });
