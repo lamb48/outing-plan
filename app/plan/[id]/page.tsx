@@ -119,77 +119,79 @@ export default async function PlanPage({ params }: PageProps) {
       <main className="container mx-auto max-w-7xl px-4 pt-24 pb-10 md:pt-28">
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,6fr)_minmax(0,4fr)]">
           <section className="space-y-4">
-            <Card className="border border-gray-200 bg-white py-2 shadow-sm">
-              <CardHeader className="space-y-3 pt-6 pb-4">
-                <div className="space-y-2.5">
-                  <CardTitle className="text-2xl font-semibold text-gray-900 md:text-3xl">
+            <Card className="gap-0 border border-gray-200 bg-white py-0 shadow-sm">
+              <CardHeader className="space-y-2 rounded-t-xl bg-gray-50/60 px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4">
+                <div className="space-y-3">
+                  <CardTitle className="text-xl font-semibold text-gray-900 sm:text-2xl md:text-3xl">
                     {plan.title}
                   </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     {plan.categories.map((category: string, index: number) => (
                       <Badge
                         key={index}
                         variant="secondary"
-                        className="rounded-full border border-gray-200 bg-white text-xs font-medium text-gray-700"
+                        className="rounded-full border border-cyan-200 bg-cyan-50 text-xs font-medium text-cyan-800"
                       >
                         {category}
                       </Badge>
                     ))}
                     <Badge
                       variant="secondary"
-                      className="rounded-full border border-gray-200 bg-white text-xs font-medium text-gray-700"
+                      className="rounded-full border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-800"
                     >
-                      <Wallet className="h-3 w-3" />
+                      <Wallet className="h-3 w-3 text-emerald-600" />
                       予算 ¥{plan.budget.toLocaleString()}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-                  <div className="rounded-lg bg-gray-50 px-4 py-3 text-center">
-                    <div className="mb-1 flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600">
-                      <Wallet className="h-4 w-4 text-gray-500" />
+              <div className="h-px bg-gray-100" />
+              <CardContent className="space-y-3 px-4 pt-4 pb-4 sm:px-5 sm:pb-5 md:px-6">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
+                  <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                    <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 sm:text-sm">
+                      <Wallet className="h-3.5 w-3.5 text-gray-500 sm:h-4 sm:w-4" />
                       総費用
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-base font-semibold text-gray-900 sm:text-lg">
                       ¥{totalCost.toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 px-4 py-3 text-center">
-                    <div className="mb-1 flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600">
-                      <Clock className="h-4 w-4 text-gray-500" />
+                  <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                    <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 sm:text-sm">
+                      <Clock className="h-3.5 w-3.5 text-gray-500 sm:h-4 sm:w-4" />
                       総所要時間
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">{totalDurationHours}時間</p>
+                    <p className="text-base font-semibold text-gray-900 sm:text-lg">
+                      {totalDurationHours}時間
+                    </p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 px-4 py-3 text-center">
-                    <div className="mb-1 flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600">
-                      <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                    <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 sm:text-sm">
+                      <MapPin className="h-3.5 w-3.5 text-gray-500 sm:h-4 sm:w-4" />
                       スポット数
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">{plan.spots.length}カ所</p>
+                    <p className="text-base font-semibold text-gray-900 sm:text-lg">
+                      {plan.spots.length}カ所
+                    </p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 px-4 py-3 text-center">
-                    <div className="mb-1 flex items-center justify-center gap-1.5 text-sm font-medium text-gray-600">
-                      <Star className="h-4 w-4 text-gray-500" />
+                  <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-center sm:px-4 sm:py-3">
+                    <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 sm:text-sm">
+                      <Star className="h-3.5 w-3.5 text-gray-500 sm:h-4 sm:w-4" />
                       平均評価
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-base font-semibold text-gray-900 sm:text-lg">
                       {averageRating ? averageRating.toFixed(1) : "-"}
                     </p>
                   </div>
                 </div>
 
                 {totalCost > plan.budget && (
-                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-900">予算を超えています</p>
-                      <p className="text-sm text-amber-800">
-                        設定予算より¥{(totalCost - plan.budget).toLocaleString()}超過しています
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 sm:px-4">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                    <p className="text-xs font-medium text-rose-700 sm:text-sm">
+                      予算を¥{(totalCost - plan.budget).toLocaleString()}超過しています
+                    </p>
                   </div>
                 )}
               </CardContent>
