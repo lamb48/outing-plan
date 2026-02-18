@@ -120,9 +120,9 @@ export default async function PlanPage({ params }: PageProps) {
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,6fr)_minmax(0,4fr)]">
           <section className="space-y-4">
             <Card className="border border-gray-200 bg-white py-2 shadow-sm">
-              <CardHeader className="space-y-3 pb-4">
+              <CardHeader className="space-y-3 pt-6 pb-4">
                 <div className="space-y-2.5">
-                  <CardTitle className="text-xl font-semibold text-gray-900 md:text-2xl">
+                  <CardTitle className="text-2xl font-semibold text-gray-900 md:text-3xl">
                     {plan.title}
                   </CardTitle>
                   <div className="flex flex-wrap items-center gap-2">
