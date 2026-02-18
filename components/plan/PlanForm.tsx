@@ -12,6 +12,7 @@ import { BudgetFilterDialog } from "@/components/plan/BudgetFilterDialog";
 import { TimeFilterDialog } from "@/components/plan/TimeFilterDialog";
 import { CategoryFilterDialog } from "@/components/plan/CategoryFilterDialog";
 import { PlacesAutocomplete } from "@/components/plan/PlacesAutocomplete";
+import { trackEvent } from "@/lib/analytics/gtag";
 
 const planFormSchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -89,6 +90,12 @@ export function PlanForm() {
     setIsLoading(true);
     setError(null);
     setProgressMessage(STATUS_MESSAGES.collecting);
+    trackEvent("plan_generate_start", {
+      budget: data.budget,
+      duration_hours: data.durationHours,
+      category_count: data.categories.length,
+      has_location_name: Boolean(data.locationName),
+    });
 
     try {
       const response = await fetch("/api/plan/generate", {
@@ -134,6 +141,12 @@ export function PlanForm() {
           }
 
           if (event.status === "done") {
+            trackEvent("plan_generate_success", {
+              budget: data.budget,
+              duration_hours: data.durationHours,
+              category_count: data.categories.length,
+              has_plan_id: Boolean(event.plan?.id),
+            });
             if (event.plan?.id) {
               router.push(`/plan/${event.plan.id}`);
             }
@@ -146,7 +159,13 @@ export function PlanForm() {
       }
     } catch (err) {
       console.error("Error generating plan:", err);
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      const errorMessage = err instanceof Error ? err.message : "エラーが発生しました";
+      trackEvent("plan_generate_error", {
+        budget: data.budget,
+        duration_hours: data.durationHours,
+        category_count: data.categories.length,
+      });
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       setProgressMessage("");
