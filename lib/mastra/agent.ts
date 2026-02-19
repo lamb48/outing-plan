@@ -154,7 +154,10 @@ export async function generateOutingPlan(
 
     let selectionResponse: Awaited<ReturnType<typeof spotSelectionAgent.generate>> | undefined;
     try {
-      selectionResponse = await spotSelectionAgent.generate(selectionPrompt, { maxSteps: 1 });
+      selectionResponse = await spotSelectionAgent.generate(selectionPrompt, {
+        maxSteps: 1,
+        modelSettings: { temperature: 1.8 },
+      });
     } finally {
       selectionGen?.end({
         output: selectionResponse?.text ?? "",

@@ -130,8 +130,24 @@ export async function searchPlacesForCategories(
 }
 
 /**
+ * 配列からランダムにn件サンプリング（非破壊）
+ */
+function randomSample<T>(arr: T[], n: number): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(n, copy.length));
+}
+
+/**
  * カテゴリ別検索結果から AliasRegistry を構築
  * restaurant → R1, R2, ..., cafe → C1, C2, ... の形式
+ *
+ * 上位固定スキップ方式でランダム性を確保:
+ * - rating上位25%（常に選ばれがちな有名スポット）をスキップ
+ * - 残り75%からランダムに8件サンプリング → 毎回異なる候補セット
  */
 export function buildAliasRegistry(placesByCategory: Record<string, PlaceResult[]>): AliasRegistry {
   const registry: AliasRegistry = {};
@@ -139,14 +155,16 @@ export function buildAliasRegistry(placesByCategory: Record<string, PlaceResult[
   for (const [category, places] of Object.entries(placesByCategory)) {
     const prefix = getCategoryPrefix(category);
 
-    // カテゴリ別に独立してシャッフル（元の配列は変更しない）
-    const shuffled = [...places];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+    // ratingでソート（null/undefinedは末尾）
+    const sorted = [...places].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 
-    shuffled.forEach((place, index) => {
+    // 上位25%をスキップして固定化を防ぐ（最低4件残す）
+    const skipCount = Math.min(Math.floor(sorted.length * 0.25), sorted.length - 4);
+    const pool = sorted.slice(Math.max(0, skipCount));
+
+    // プールからランダム8件サンプリングしてaliasを付与
+    const sampled = randomSample(pool, 8);
+    sampled.forEach((place, index) => {
       const alias = `${prefix}${index + 1}`;
       registry[alias] = place;
     });
@@ -163,13 +181,13 @@ function formatPriceLevel(priceLevel?: number): string {
 
 /**
  * LLMに渡す軽量テキスト表現を生成（placeId/photoReference は含まない）
+ * rating は表示しない（LLMの高評価バイアスを排除するため）
  */
 export function formatAliasListForLLM(registry: AliasRegistry): string {
   return Object.entries(registry)
     .map(([alias, place]) => {
-      const rating = place.rating != null ? ` ★${place.rating.toFixed(1)}` : "";
       const price = formatPriceLevel(place.priceLevel);
-      return `${alias} ${place.name}${rating}${price} [${place.category}] (${place.lat.toFixed(4)},${place.lng.toFixed(4)})`;
+      return `${alias} ${place.name}${price} [${place.category}] (${place.lat.toFixed(4)},${place.lng.toFixed(4)})`;
     })
     .join("\n");
 }
