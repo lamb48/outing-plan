@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import { PUBLIC_IMAGES } from "@/lib/supabase/storage";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,13 +16,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://outing-plan.vercel.app";
+const siteTitle = "OutingPlan - あなたにぴったりのおでかけプラン";
+const siteDescription =
+  "予算や時間に合わせた最適なおでかけプランを自動生成。観光スポットやグルメ、アクティビティまで、あなただけのプランを作成できます。";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "OutingPlan - あなたにぴったりのおでかけプラン",
+    default: siteTitle,
     template: "%s | OutingPlan",
   },
-  description:
-    "予算や時間に合わせた最適なおでかけプランを自動生成。観光スポットやグルメ、アクティビティまで、あなただけのプランを作成できます。",
+  description: siteDescription,
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: siteUrl,
+    siteName: "OutingPlan",
+    title: siteTitle,
+    description: siteDescription,
+    images: [
+      {
+        url: PUBLIC_IMAGES.ogpImage,
+        width: 1200,
+        height: 630,
+        alt: "OutingPlan",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+    images: [PUBLIC_IMAGES.ogpImage],
+  },
   other: {
     "format-detection": "telephone=no, email=no, address=no",
   },

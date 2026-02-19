@@ -25,4 +25,5 @@ export function getPublicImageUrl(bucket: string, path: string): string {
  */
 export const PUBLIC_IMAGES = {
   heroBackground: getPublicImageUrl("outing-plan", "images/hero-background.jpeg"),
+  ogpImage: getPublicImageUrl("outing-plan", "images/ogp-image.png"),
 } as const;
