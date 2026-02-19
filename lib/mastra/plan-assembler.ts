@@ -78,43 +78,53 @@ export function assemblePlan(params: {
  * タイミングエージェントのJSON出力をパース
  */
 export function parseTimingResponse(text: string): Record<string, TimingResult> {
-  const json = extractJson(text);
-  const parsed = JSON.parse(json);
+  try {
+    const json = extractJson(text);
+    const parsed = JSON.parse(json);
 
-  const result: Record<string, TimingResult> = {};
-  for (const [alias, value] of Object.entries(parsed)) {
-    const v = value as Record<string, unknown>;
-    if (
-      typeof v.arrivalTime === "string" &&
-      typeof v.departureTime === "string" &&
-      typeof v.estimatedDuration === "number"
-    ) {
-      result[alias] = {
-        arrivalTime: v.arrivalTime,
-        departureTime: v.departureTime,
-        estimatedDuration: v.estimatedDuration,
-      };
+    const result: Record<string, TimingResult> = {};
+    for (const [alias, value] of Object.entries(parsed)) {
+      const v = value as Record<string, unknown>;
+      if (
+        typeof v.arrivalTime === "string" &&
+        typeof v.departureTime === "string" &&
+        typeof v.estimatedDuration === "number"
+      ) {
+        result[alias] = {
+          arrivalTime: v.arrivalTime,
+          departureTime: v.departureTime,
+          estimatedDuration: v.estimatedDuration,
+        };
+      }
     }
+    return result;
+  } catch (err) {
+    throw new Error(
+      `[parseTimingResponse] JSON parse failed: ${err instanceof Error ? err.message : err}`,
+    );
   }
-  return result;
 }
 
 /**
  * コストエージェントのJSON出力をパース
  */
 export function parseCostResponse(text: string): Record<string, CostResult> {
-  const json = extractJson(text);
-  const parsed = JSON.parse(json);
+  try {
+    const json = extractJson(text);
+    const parsed = JSON.parse(json);
 
-  const result: Record<string, CostResult> = {};
-  for (const [alias, value] of Object.entries(parsed)) {
-    const v = value as Record<string, unknown>;
-    const cost = Number(v.estimatedCost);
-    if (Number.isFinite(cost)) {
-      result[alias] = { estimatedCost: cost };
+    const result: Record<string, CostResult> = {};
+    for (const [alias, value] of Object.entries(parsed)) {
+      const v = value as Record<string, unknown>;
+      const cost = Number(v.estimatedCost);
+      if (Number.isFinite(cost)) {
+        result[alias] = { estimatedCost: cost };
+      }
     }
+    return result;
+  } catch {
+    return {};
   }
-  return result;
 }
 
 /**
@@ -123,14 +133,18 @@ export function parseCostResponse(text: string): Record<string, CostResult> {
 export function parseSelectionResponse(text: string): {
   selectedAliases: string[];
 } {
-  const json = extractJson(text);
-  const parsed = JSON.parse(json);
+  try {
+    const json = extractJson(text);
+    const parsed = JSON.parse(json);
 
-  const selectedAliases = Array.isArray(parsed.selectedAliases)
-    ? parsed.selectedAliases.filter((a: unknown) => typeof a === "string")
-    : [];
+    const selectedAliases = Array.isArray(parsed.selectedAliases)
+      ? parsed.selectedAliases.filter((a: unknown) => typeof a === "string")
+      : [];
 
-  return { selectedAliases };
+    return { selectedAliases };
+  } catch {
+    return { selectedAliases: [] };
+  }
 }
 
 /**

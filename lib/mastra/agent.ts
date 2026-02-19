@@ -11,7 +11,7 @@
 
 import { type GeneratePlanParams, type GeneratedPlan } from "./schemas";
 import { collectAllData } from "./data-collectors/index";
-import { formatAliasListForLLM } from "./data-collectors/places-collector";
+import { formatAliasListForLLM, type AliasRegistry } from "./data-collectors/places-collector";
 import { spotSelectionAgent } from "./agents/spot-selection-agent";
 import { timingAgent } from "./agents/timing-agent";
 import { costAgent } from "./agents/cost-agent";
@@ -25,6 +25,7 @@ import {
   parseTimingResponse,
   parseCostResponse,
   parseTitleResponse,
+  type TimingResult,
 } from "./plan-assembler";
 import { determineStartTime } from "./start-time";
 import { createTrace, addTraceScore } from "../langfuse";
@@ -197,7 +198,7 @@ export async function generateOutingPlan(
       name: "phase-2b-timing",
       model: "google/gemini-2.5-flash-lite",
       input: timingPrompt,
-      metadata: { maxSteps: 4 },
+      metadata: { maxSteps: 8 },
     });
     const costGen = trace?.generation({
       name: "phase-2b-cost",
@@ -209,11 +210,11 @@ export async function generateOutingPlan(
     let costResponse: Awaited<ReturnType<typeof costAgent.generate>> | undefined;
     try {
       [timingResponse, costResponse] = await Promise.all([
-        timingAgent.generate(timingPrompt, { maxSteps: 4 }),
+        timingAgent.generate(timingPrompt, { maxSteps: 8 }),
         costAgent.generate(costPrompt, { maxSteps: 1 }),
       ]);
     } finally {
-      // timingAgent は maxSteps:4 なので複数ステップ累計の totalUsage を使う
+      // timingAgent は maxSteps:8 なので複数ステップ累計の totalUsage を使う
       timingGen?.end({
         output: timingResponse?.text ?? "",
         usage: {
@@ -230,8 +231,19 @@ export async function generateOutingPlan(
       });
     }
 
-    const timing = parseTimingResponse(timingResponse.text ?? "");
-    const cost = parseCostResponse(costResponse.text ?? "");
+    let timing: Record<string, TimingResult>;
+    try {
+      timing = parseTimingResponse(timingResponse?.text ?? "");
+    } catch (err) {
+      console.warn("[agent] timing parse failed, using programmatic fallback:", err);
+      timing = buildFallbackTiming(
+        validAliases,
+        collected.aliasRegistry,
+        planStartTime,
+        params.durationHours,
+      );
+    }
+    const cost = parseCostResponse(costResponse?.text ?? "");
 
     // --- Phase 2c: タイトル生成（実スケジュールを元に）---
     const schedule = validAliases.map((alias) => {
@@ -355,4 +367,59 @@ export async function generateOutingPlan(
         : "プラン生成に失敗しました",
     );
   }
+}
+
+/**
+ * タイミングエージェントが空/不正 JSON を返した場合のプログラマティックフォールバック
+ * カテゴリ別デフォルト滞在時間と固定移動時間でタイムラインを生成する
+ */
+function buildFallbackTiming(
+  aliases: string[],
+  registry: AliasRegistry,
+  startTime: string,
+  durationHours: number,
+): Record<string, TimingResult> {
+  const CATEGORY_DURATIONS: Record<string, number> = {
+    cafe: 60,
+    restaurant: 90,
+    bar: 120,
+    izakaya: 120,
+    tourist_attraction: 90,
+    museum: 90,
+    park: 60,
+    shopping_mall: 75,
+  };
+  const TRAVEL_MIN = 15;
+  const totalMin = durationHours * 60;
+  const perSpot = Math.max(
+    30,
+    Math.floor((totalMin - TRAVEL_MIN * Math.max(0, aliases.length - 1)) / aliases.length),
+  );
+
+  const result: Record<string, TimingResult> = {};
+  let curMs = new Date(startTime).getTime();
+
+  for (const alias of aliases) {
+    const category = registry[alias]?.category ?? "";
+    const duration = Math.min(CATEGORY_DURATIONS[category] ?? 60, perSpot);
+    const arrival = new Date(curMs);
+    const departure = new Date(curMs + duration * 60_000);
+    result[alias] = {
+      arrivalTime: toJstIso(arrival),
+      departureTime: toJstIso(departure),
+      estimatedDuration: duration,
+    };
+    curMs = departure.getTime() + TRAVEL_MIN * 60_000;
+  }
+  return result;
+}
+
+function toJstIso(date: Date): string {
+  const jstMs = date.getTime() + 9 * 60 * 60_000;
+  const d = new Date(jstMs);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}` +
+    `T${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:00+09:00`
+  );
 }
