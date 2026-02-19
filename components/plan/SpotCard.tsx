@@ -29,10 +29,12 @@ export function SpotCard({ spot }: SpotCardProps) {
   const arrivalTime = new Date(spot.arrivalTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Tokyo",
   });
   const departureTime = new Date(spot.departureTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Tokyo",
   });
 
   return (
