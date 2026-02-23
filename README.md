@@ -27,7 +27,7 @@
 
 ## 概要
 
-Google Gemini 2.5とMastraによる2段階AIエージェント処理で、ユーザーの条件（時間・予算・カテゴリ・目的地）に基づいた最適な外出プランを自動生成します。
+Google Gemini 2.5とMastraによるマルチフェーズAIエージェント処理で、ユーザーの条件（時間・予算・カテゴリ・目的地）に基づいた最適な外出プランを自動生成します。
 
 **プロジェクト規模**: 約10,357行、63ファイル、26コンポーネント
 
@@ -35,7 +35,9 @@ Google Gemini 2.5とMastraによる2段階AIエージェント処理で、ユー
 
 ## 主な機能
 
-- **AIプラン生成**: 2段階エージェント（スポット検索 → 構造化）
+- **AIプラン生成**: マルチフェーズ並列エージェント（スポット収集・選定・スケジュール・コスト・タイトル生成）
+- **SSEストリーミング**: プログレス表示付きリアルタイム生成
+- **トレンド連動**: Tavilyでエリアの旬な情報をプランに反映（オプション）
 - **Google Maps統合**: マーカー・ルート表示、自動ズーム
 - **認証・履歴管理**: Supabase Auth、フィルタリング・ソート
 - **レート制限**: データベースベース（10req/分）
@@ -50,24 +52,28 @@ Google Gemini 2.5とMastraによる2段階AIエージェント処理で、ユー
 | **フロントエンド** | Next.js 16.1 (App Router), React 19, TypeScript 5, Tailwind CSS v4 |
 | **バックエンド**   | Next.js API Routes, Prisma 6.19, PostgreSQL (Supabase)             |
 | **AI**             | Mastra 1.3, Google Gemini 2.5 Flash-Lite, Langfuse 3.38            |
-| **外部API**        | Google Maps/Places/Directions API                                  |
+| **外部API**        | Google Maps/Places/Directions API, Open-Meteo, Tavily (オプション) |
 
 ---
 
 ## アーキテクチャ
 
-### 2段階AIエージェント処理
+### マルチフェーズAIエージェント処理
 
 ```
 ユーザー入力
   ↓
 バリデーション + レート制限
   ↓
-Agent 1: スポット検索 (Google Places API)
+Phase 0: 開始時刻の自動決定（カテゴリ・現在地から推定）
   ↓
-Agent 2: JSON構造化 (Strict JSON Mode)
+Phase 1: データ並列収集（Google Places + Open-Meteo天気 + Tavilyトレンド）
   ↓
-データベース保存 + Langfuseトレーシング
+Phase 2a: スポット選定エージェント（aliasレジストリで長ID除去）
+  ↓
+Phase 2b: タイミング + コストエージェント（並列実行）
+  ↓
+Phase 3: コード組み立て + Zod検証 + タイトル生成 → DB保存
 ```
 
 ---
@@ -84,7 +90,7 @@ Agent 2: JSON構造化 (Strict JSON Mode)
 
 ### AI統合
 
-- 2段階処理で精度向上、Strict JSON Mode、Langfuseトレーシング
+- 並列マルチフェーズ処理・Alias Registryでハルシネーション防止、フォールバック機構、Langfuseトレーシング
 
 ### パフォーマンス
 
@@ -122,6 +128,7 @@ npm run dev  # http://localhost:3000
 - `GOOGLE_PLACES_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 - `NEXT_PUBLIC_GA4_MEASUREMENT_ID`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
+- `TAVILY_API_KEY` (オプション)
 - `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY` (オプション)
 
 ---
@@ -130,7 +137,7 @@ npm run dev  # http://localhost:3000
 
 ```
 app/          # Next.js App Router (ページ・API Routes)
-components/   # Reactコンポーネント (plan/, layout/, ui/)
+components/   # Reactコンポーネント (plan/, layout/, ui/, analytics/)
 lib/          # ライブラリ (mastra/, supabase/, prisma.ts)
 hooks/        # カスタムフック
 prisma/       # データベーススキーマ
