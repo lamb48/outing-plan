@@ -56,7 +56,7 @@
     "typescript": "^5"
   },
   "overrides": {
-    "minimatch": "^10.2.1",
+    "minimatch": "^10.2.4",
     "hono": "4.12.2"
   },
   "lint-staged": {
