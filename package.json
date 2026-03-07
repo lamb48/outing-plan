@@ -57,7 +57,7 @@
   },
   "overrides": {
     "minimatch": "^10.2.4",
-    "hono": "4.12.2"
+    "hono": "4.12.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
