@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
 
     // クエリパラメータ
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const rawLimit = parseInt(searchParams.get("limit") || "20");
+    const rawOffset = parseInt(searchParams.get("offset") || "0");
+    const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 20, 1), 50);
+    const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
 
     // プラン一覧取得（RLSにより自動的に自分のプランのみ）
     const {

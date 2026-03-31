@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateOutingPlan, type PlanProgress } from "@/lib/mastra/agent";
 import { flushLangfuse } from "@/lib/langfuse";
 import { mapCategoryToPlacesType } from "@/lib/categories";
-import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/ratelimit-supabase";
+import { rateLimit, RATE_LIMITS } from "@/lib/ratelimit-supabase";
 
 /**
  * プラン生成リクエストのバリデーションスキーマ
@@ -54,9 +54,8 @@ export async function POST(request: NextRequest) {
   }
 
   // レート制限チェック
-  const clientIp = getClientIp(request);
   const rateLimitResult = await rateLimit(
-    `plan-generate:${clientIp}`,
+    `plan-generate:${user.id}`,
     RATE_LIMITS.PLAN_GENERATE.limit,
     RATE_LIMITS.PLAN_GENERATE.windowMs,
   );
@@ -96,7 +95,13 @@ export async function POST(request: NextRequest) {
   const validationResult = generatePlanSchema.safeParse(body);
   if (!validationResult.success) {
     return new Response(
-      JSON.stringify({ error: "Invalid request body", details: validationResult.error.errors }),
+      JSON.stringify({
+        error: "Invalid request body",
+        details:
+          process.env.NODE_ENV === "development"
+            ? validationResult.error.errors
+            : validationResult.error.errors.map((e) => ({ path: e.path, message: e.message })),
+      }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -182,7 +187,10 @@ export async function POST(request: NextRequest) {
           send({
             status: "error",
             error: "Failed to generate plan",
-            message: message || "プランの生成に失敗しました",
+            message:
+              process.env.NODE_ENV === "development"
+                ? message
+                : "プランの生成に失敗しました。しばらく経ってから再試行してください。",
           });
         }
       } finally {

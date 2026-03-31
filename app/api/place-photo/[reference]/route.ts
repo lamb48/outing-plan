@@ -11,6 +11,12 @@ export async function GET(
 ) {
   try {
     const { reference } = await params;
+
+    // photo_reference のバリデーション（英数字・ハイフン・アンダースコアのみ許可）
+    if (!reference || !/^[a-zA-Z0-9_-]+$/.test(reference)) {
+      return NextResponse.json({ error: "Invalid photo reference" }, { status: 400 });
+    }
+
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
     if (!apiKey) {
@@ -18,12 +24,16 @@ export async function GET(
       return NextResponse.json({ error: "API key not configured" }, { status: 500 });
     }
 
-    // クエリパラメータから画像サイズを取得（デフォルト: 400px）
+    // クエリパラメータから画像サイズを取得（デフォルト: 400px、100〜1600の範囲）
     const searchParams = request.nextUrl.searchParams;
-    const maxWidth = searchParams.get("maxwidth") || "400";
+    const rawMaxWidth = parseInt(searchParams.get("maxwidth") || "400");
+    const maxWidth = Math.min(
+      Math.max(Number.isFinite(rawMaxWidth) ? rawMaxWidth : 400, 100),
+      1600,
+    );
 
     // Google Places Photo APIにリクエスト
-    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${reference}&key=${apiKey}`;
+    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${encodeURIComponent(reference)}&key=${apiKey}`;
 
     const response = await fetch(photoUrl);
 
